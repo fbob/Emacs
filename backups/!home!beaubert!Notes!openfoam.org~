@@ -1,0 +1,110 @@
+Title Notes sur OpenFOAM
+Author François Beaubert
+%%date(%m/%d/%Y)
+
+* Quelques liens sur OpenFOAM
+
+** site officile: http://www.opencfd.co.uk/openfoam/
+** le wiki offciel (très bon): http://openfoamwiki.net/index.php/main_page
+** un autre wiki: http://www.mfix.org/mwiki/index.php/main_page
+** le forum (incontournable !): http://openfoam.cfd-online.com/cgi-bin/forum/discus.cgi
+** le site d'un des père d'openfoam : http://www.h.jasak.dial.pipex.com/main.shtml
+
+* Mailleur
+
+** Gmesh: http://www.geuz.org/gmsh/
+   Peut être utilisé avec OpenFOAM:
+   - http://openfoamwiki.net/index.php/Contrib_gmshFoam#Gmsh
+   - http://openfoamwiki.net/index.php/Contrib_gmsh2ToFoam
+
+== Postraitement ==
+
+=== Matlab-clone en python ===
+//(vraiment très bon à mon sens)//
+
+- Scipy: http://www.scipy.org/
+    - il faut absolument jetter un oeil sur http://www.scipy.org/Cookbook pour avoir une idée des possibilitées très très étendues !!!
+    - plus pour ceux qui viennent de Matlab: http://www.scipy.org/NumPy_for_Matlab_Users
+    - utiliser le shell interactif Ipython avec Scipy: http://ipython.scipy.org/moin/
+
+- Matplotlib (bibliothèque graphique associée à Scipy, la référence !):
+  - http://matplotlib.sourceforge.net/
+  - http://www.scipy.org/Cookbook/Matplotlib
+
+- Enthought Tool Suite (en beta mais très très prometteur):
+    - va venir concurrencer très serieusement Matplotlib d'ici quelques temps ...
+    - en particulier:
+        - Chaco2 : http://code.enthought.com/chaco/
+        - Mayavi2:
+
+
+=== 2D-3D ===
+- Paraview (associé souvent à OpenFOAM): http://www.paraview.org/
+- Mayavi2 (voir Enthought): https://svn.enthought.com/enthought/wiki/MayaVi
+- Visit: http://www.llnl.gov/visit
+
+  = Solveurs d'OpenFOAM =
+
+== Conjugate Heat Transfert ==
+
+Il existe à ce jour (%%date(%m-%d-%Ya)) différent solveur
+qui prennent en compte les transferts de chaleur par conduction,
+ convection et //rayonnememnt ?//
+
+A compléter suivant les sources du [Wiki http://openfoamwiki.net]
+
+=== Solveur ===
+
+Un solveur créer par  Hrvoje Jasak
+Voir la liste de diffusion  mais **tata**
+
+=== Wall Functions ? ===
+When we are predicting heat transfer it is in general no good idea to use wall functions, because the heat transfer at the walls are very important for the temperature ﬁeld in the whole domain.
+
+= Conditions aux limites=
+
+== Rotation ==
+
+Quelques liens à voir:
+http://openfoam.cfd-online.com/forum/messages/1/4473.html
+
+
+% vim: tw=55
+
+* Solveurs
+** simpleSRFFoam
+SRF stands for Single Reference Frame
+*** Urel is the relative velocity in the rotational frame,
+*** Uabs the absolute velocity would then be:
+    Uabs = Urel + omega x R
+    - omega is the angular velocity vector
+    - R the position vector in rotational frame.
+*** Example:
+    inlet
+    {
+    type SRFVelocity;
+    inletValue uniform (0 0 -10);
+    relative yes;
+    value uniform (0 0 0);
+    }
+
+src/finiteVolume/fvPatchFields/derived
+
+
+
+
+
+* Utilities
+** PyFoam
+*** pyFoamPlotRunner.py
+
+    pyFoamPlotRunner.py --steady simpleFoam . pitzDaily
+
+    It starts the simulation and monitors ther output. Using that output it
+    - plots the residuals
+    - tells the simulation to stop and write a result once none of the linear solvers iterates anymore
+
+*** pyFoamSteadyRunner.py
+
+    pyFoamSteadyRunner.py simpleFoam . pitzDaily
+    does the same without the plotting.

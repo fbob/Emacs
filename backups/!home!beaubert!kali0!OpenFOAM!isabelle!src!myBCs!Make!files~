@@ -1,0 +1,5 @@
+//parabolicVelocity/parabolicVelocityFvPatchVectorField.C
+//myMixed/myMixedFvPatchField.C
+mixed/mixedFvPatchFields.C
+//pressureInletOutletVelocity/pressureInletOutletVelocityFvPatchVectorField.C
+LIB=$(FOAM_USER_LIBBIN)/libmyBCs

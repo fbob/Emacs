@@ -1,0 +1,428 @@
+/*
+* Gmsh script to generate the swirling device mesh
+*
+* Filename: swirler.geo
+* Description: Generation of the swirling device geometry and mesh with Gmsh
+* This script is based on the previous work of Halldor PALSSON(2) and Sylvain LALOT(1).
+*
+*  Author(s): Francois BEAUBERT(1), Sylvain LALOT(1)
+*
+* (1) TEMPO EA4542, University of Valenciennes, France
+* (2) Faculty of Industrial Engineering, Mechanical Engineering and Computer Science, University of Iceland
+
+* Created: 07/01/2011
+* By: Francois BEAUBERT
+* Version: 1.0 alpha-2
+* Changelog:
+* 21/01/20111 by Sylvain LALOT
+* 25/01/2011 by Francois BEAUBERT
+* 16/02/2011 by Sylvain LALOT
+*
+* Usage:
+* o use ./run.sh
+*/
+Geometry.AutoCoherence = 0;
+/*
+* Geometric parameters
+*/
+
+pipeDiameter   = 0.036;
+centerDiameter = 0.005;
+entranceLength = 0.072;
+finLength      = 0.072;
+tailLength     = 0.010;
+mainPipeLength = 4.32;
+numberOfFins   = 4;
+
+shift_x= pipeDiameter/100;
+
+/*
+* Twisting parameters
+*/
+
+exitAngle  = 60;
+twistAngle = 150;
+exitLead   = 0.50;
+
+/*
+* spline coefficients
+*/
+gamma = 0.6 ;
+beta = 1.2;
+
+twistAngle = twistAngle*Pi/180;
+exitAngle = exitAngle*Pi/180;
+leadAngle = exitLead*twistAngle;
+/*
+* Meshing parameters
+*/
+
+cellsEntranceLength = 15; // Number of cells upstream of the swirling device
+entranceProgression = 0.9;
+cellsRadial         = 10; // Number of cells in the radial direction
+cellsRadial2        = 5; // Number of cells in the radial direction
+radialBump          = 0.05; // Stretching of the cells in the radial direction
+cellsRevolution     = 20; // Number of cells for one revolution
+dRevolution         = 3;  // Stretching of the cells for one revolution
+cellsTailLength     = 8;  // Number of cells for the tail of the centerpiece
+cellsFinLength      = 40; // Number of cells for the fins length
+finBump             = 0.4; // Stretching of the cells at the beginning and end of the fins
+nbPointsSpline      = 60; // Number of points to describe the spline edges used for the fins
+cellsPipeLength     = 600; // Number of cells downstream of the swirling device
+pipeLengthProgression = 1.005; // Stretching of the cells dowstream the swirling device
+
+/*
+* Code
+*/
+
+// Points for the tube
+p1= newp; Point(p1 )= {shift_x, 0, 0} ;
+p2= newp; Point(p2 )= {shift_x, 0, -entranceLength};
+p3= newp; Point(p3 )= {shift_x, 0, -centerDiameter};
+p4= newp; Point(p4 )= {shift_x, 0, -centerDiameter/2};
+p5= newp; Point(p5 )= {shift_x+centerDiameter/2*Cos(-Pi/4), 0, centerDiameter/2*Sin(-Pi/4)}; //SL
+p6= newp; Point(p6 )= {shift_x+centerDiameter/2, 0,  0};
+p7= newp; Point(p7 )= {pipeDiameter/2, 0, -entranceLength};
+p8= newp; Point(p8 )= {pipeDiameter/2, 0, -centerDiameter};
+p9= newp; Point(p9) = {pipeDiameter/2, 0, 0 };
+
+// Francois BEAUBERT
+pp10 = newp; Point(pp10) = {shift_x+centerDiameter, 0, -entranceLength };
+pp11 = newp; Point(pp11) = {shift_x+centerDiameter, 0, -centerDiameter };
+pp12 = newp; Point(pp12) = {shift_x+centerDiameter, 0, 0 };
+//
+
+m_p10=shift_x+centerDiameter/2;
+p10= newp; Point(p10 )= {m_p10*Cos(twistAngle), m_p10*Sin(twistAngle), finLength};
+
+// center point for tail curve
+m_p11=(tailLength^2 - (centerDiameter/2)^2)/centerDiameter-shift_x;
+p11= newp; Point(p11) = {m_p11*Cos(twistAngle-Pi), m_p11*Sin(twistAngle-Pi), finLength};
+
+r_tail=m_p11+shift_x+centerDiameter/2;
+phi_tail=Atan(tailLength/(m_p11+shift_x));
+
+m_p12=r_tail*Cos(phi_tail/2)-m_p11;
+p12= newp; Point(p12) = {m_p12*Cos(twistAngle), m_p12*Sin(twistAngle), finLength + r_tail*Sin(phi_tail/2)};
+
+p13= newp; Point(p13) = {shift_x*Cos(twistAngle), shift_x*Sin(twistAngle), finLength + tailLength};
+p14= newp; Point(p14) = {shift_x*Cos(twistAngle), shift_x*Sin(twistAngle), finLength + tailLength + centerDiameter/3};
+p15= newp; Point(p15) = {shift_x*Cos(twistAngle), shift_x*Sin(twistAngle), finLength + tailLength + mainPipeLength};
+p16= newp; Point(p16) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), finLength};
+p17= newp; Point(p17) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), finLength + tailLength + centerDiameter/3};
+p18= newp; Point(p18) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), finLength + tailLength + mainPipeLength};
+
+//Francois BEAUBERT
+pp13 = newp; Point(pp13) = {(shift_x+centerDiameter)*Cos(twistAngle), (shift_x+centerDiameter)*Sin(twistAngle), finLength};
+pp14 = newp; Point(pp14) = {(shift_x+centerDiameter)*Cos(twistAngle), (shift_x+centerDiameter)*Sin(twistAngle), finLength + tailLength + centerDiameter/3};
+pp15 = newp; Point(pp15) = {(shift_x+centerDiameter)*Cos(twistAngle), (shift_x+centerDiameter)*Sin(twistAngle), finLength + tailLength + mainPipeLength};
+//
+
+
+// Points of the splines for the Fins
+
+
+h = finLength;
+
+// 4 control points
+p1x_s1 = twistAngle* (shift_x+centerDiameter/2);
+p1z_s1 = h;
+
+p2x_s1 = (twistAngle - leadAngle)* (shift_x+centerDiameter/2);
+p2z_s1 = h - leadAngle * (shift_x+centerDiameter/2) * Tan(exitAngle);
+
+r = (h - twistAngle * (shift_x+centerDiameter/2) * Tan(exitAngle)) * beta;
+p3x_s1 = 0;
+p3z_s1 = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s1 = 0;
+p4z_s1= 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s1[i] = (1-u)^3*p1x_s1+3*u*(1-u)^2*p2x_s1+3*u^2*(1-u)*p3x_s1+u^3*p4x_s1;
+pz_s1[i] = (1-u)^3*p1z_s1+3*u*(1-u)^2*p2z_s1+3*u^2*(1-u)*p3z_s1+u^3*p4z_s1;
+x_s1[i] = Cos(px_s1[i]/(centerDiameter/2+shift_x))*(shift_x+centerDiameter/2);
+y_s1[i] = Sin(px_s1[i]/(centerDiameter/2+shift_x))*(shift_x+centerDiameter/2);
+ps_s1= newp; Point(ps_s1 )= {x_s1[i], y_s1[i], pz_s1[i]} ;
+EndFor
+
+// Francois BEAUBERT
+s1 = newreg; Spline(s1) = {p6, ps_s1-nbPointsSpline+1:ps_s1, p10}; // Spline on centerpiece wall
+//
+
+
+p1x_s2 = twistAngle* pipeDiameter/2;
+p1z_s2 = h;
+
+p2x_s2 = (twistAngle- leadAngle)* pipeDiameter/2;
+p2z_s2 = h - leadAngle * pipeDiameter/2 * Tan(exitAngle);
+
+r = (h - twistAngle * pipeDiameter/2 * Tan(exitAngle)) * beta;
+p3x_s2 = 0;
+p3z_s2 = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s2 = 0;
+p4z_s2= 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s2[i] = (1-u)^3*p1x_s2+3*u*(1-u)^2*p2x_s2+3*u^2*(1-u)*p3x_s2+u^3*p4x_s2;
+pz_s2[i] = (1-u)^3*p1z_s2+3*u*(1-u)^2*p2z_s2+3*u^2*(1-u)*p3z_s2+u^3*p4z_s2;
+x_s2[i] = Cos(2*px_s2[i]/pipeDiameter)*pipeDiameter/2;
+y_s2[i] = Sin(2*px_s2[i]/pipeDiameter)*pipeDiameter/2;
+ps_s2= newp; Point(ps_s2 )= {x_s2[i], y_s2[i], pz_s2[i]} ;
+EndFor
+
+s2 = newreg; Spline(s2) = {p9, ps_s1+1:ps_s2, p16}; // Spline on centerpiece wall
+
+//Francois BEAUBERT
+p1x_s3 = twistAngle* (shift_x+centerDiameter);
+p1z_s3 = h;
+
+p2x_s3 = (twistAngle- leadAngle)* (shift_x+centerDiameter);
+p2z_s3 = h - leadAngle * (shift_x+centerDiameter) * Tan(exitAngle);
+
+r = (h - twistAngle * (shift_x+centerDiameter) * Tan(exitAngle)) * beta;
+p3x_s3 = 0;
+p3z_s3 = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s3 = 0;
+p4z_s3= 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s3[i] = (1-u)^3*p1x_s3+3*u*(1-u)^2*p2x_s3+3*u^2*(1-u)*p3x_s3+u^3*p4x_s3;
+pz_s3[i] = (1-u)^3*p1z_s3+3*u*(1-u)^2*p2z_s3+3*u^2*(1-u)*p3z_s3+u^3*p4z_s3;
+x_s3[i] = Cos(px_s3[i]/(shift_x+centerDiameter))*(shift_x+centerDiameter);
+y_s3[i] = Sin(px_s3[i]/(shift_x+centerDiameter))*(shift_x+centerDiameter);
+ps_s3= newp; Point(ps_s3 )= {x_s3[i], y_s3[i], pz_s3[i]} ;
+EndFor
+
+s3 = newreg; Spline(s3) = {pp12, ps_s2+1:ps_s3, pp13}; // Spline on centerpiece wall
+//
+
+// Lines
+l1= newl; Line(l1 ) = {p2, p3  };
+l2= newl; Line(l2 ) = {p7, p8  };
+// Francois BEAUBERT
+l3= newl; Line(l3 ) = {p2, pp10  };
+// Francois BEAUBERT
+l4= newl; Line(l4 ) = {p3, pp11  };
+//
+l5= newl; Line(l5 ) = {p3, p4  };
+// Francois BEAUBERT
+l6= newl; Line(l6 ) = {pp11, p5 };
+//
+l7= newl; Circle(l7) = {p4, p1, p5};
+l8= newl; Circle(l8) = {p5, p1, p6};
+// Francois BEAUBERT
+l9= newl; Line(l9 ) = {p6, pp12  };
+//
+l10= newl; Line(l10 ) = {p8, p9  };
+//Francois BEAUBERT
+l11= newl; Line(l11 ) = {p10, pp13 };
+//
+l12= newl; Circle(l12) = {p10, p11, p12};
+l13= newl; Line(l13) = {p16, p17};
+//Francois BEAUBERT
+l14= newl; Line(l14) = {p12, pp14};
+//
+l15= newl; Circle(l15) = {p12, p11, p13};
+l16= newl; Line(l16) = {p13, p14};
+//Francois BEAUBERT
+l17= newl; Line(l17) = {p14, pp14};
+//
+l18= newl; Line(l18) = {p14, p15};
+l19= newl; Line(l19) = {p17, p18};
+//Francois BEAUBERT
+l20= newl; Line(l20) = {p15, pp15};
+//
+
+// Francois BEAUBERT
+l21= newl; Line(l21) = {pp10, p7};
+l22= newl; Line(l22) = {pp11, pp12};
+l23= newl; Line(l23) = {pp11, p8};
+l24= newl; Line(l24) = {pp12, p9};
+l25= newl; Line(l25) = {pp10, pp11};
+
+l26= newl; Line(l26) = {pp13, pp14};
+l27= newl; Line(l27) = {pp13, p16};
+l28= newl; Line(l28) = {pp14, p17};
+l29= newl; Line(l29) = {pp15, p18};
+l30= newl; Line(l30) = {pp14, pp15};
+
+//
+// Surfaces
+// amont = upstream
+Amont1 = newll;
+Amont1 = news;
+Line Loop(Amont1) = {l1, l4, -l25, -l3};
+Plane Surface(Amont1) = {Amont1};
+
+Amont2 = newll;
+Amont2 = news;
+Line Loop(Amont2) = {l25, l23, -l2, -l21};
+Plane Surface(Amont2) = {Amont2};
+
+Amont3 = newll;
+Amont3 = news;
+Line Loop(Amont3) = {l5, l7, -l6, -l4 };
+Plane Surface(Amont3) = {Amont3};
+
+Amont4 = newll;
+Amont4 = news;
+Line Loop(Amont4) = {l8, l9, -l22, l6};
+Plane Surface(Amont4) = {Amont4};
+
+Amont5 = newll;
+Amont5 = news;
+Line Loop(Amont5) = {l22, l24, -l10, -l23};
+Plane Surface(Amont5) = {Amont5};
+
+Fin1 = news;
+Fin1 = newll;
+Line Loop(Fin1) = {s1, l11, -s3, -l9};
+Ruled Surface(Fin1) = {Fin1};
+
+Fin2 = news;
+Fin2 = newll;
+Line Loop(Fin2) = {s3, l27, -s2, -l24};
+Ruled Surface(Fin2) = {Fin2};
+
+// // aval=downstream
+Aval1 = newll;
+Aval1 = news;
+Line Loop(Aval1) = {l12,l14,-l26,-l11};
+Plane Surface(Aval1) = {Aval1};
+
+Aval2 = newll;
+Aval2 = news;
+Line Loop(Aval2) = {l15, l16, l17, -l14};
+Plane Surface(Aval2) = {Aval2};
+
+Aval3 = newll;
+Aval3 = news;
+Line Loop(Aval3) = {l26, l28, -l13, -l27};
+Plane Surface(Aval3) = {Aval3};
+
+Aval4 = newll;
+Aval4 = news;
+Line Loop(Aval4) = {l18, l20, -l30, -l17};
+Plane Surface(Aval4) = {Aval4};
+
+Aval5 = newll;
+Aval5 = news;
+Line Loop(Aval5) = {l30, l29,-l19, -l28};
+Plane Surface(Aval5) = {Aval5};
+
+/*****
+* Mesh
+******/
+
+// Meshing of the edges
+Transfinite Line {l1,l2,l25} = cellsEntranceLength Using Progression entranceProgression;
+
+//Transfinite Line {l3,l4,l5} = cellsRadial Using Progression 1;
+Transfinite Line {l3,l4,l7} = cellsRadial2 Using Progression 1.;
+Transfinite Line {l21,l23,l24,l27,l28,l29} = cellsRadial Using Progression 0.95;
+//Transfinite Line {l6,l7,l8} = cellsRadial Using Progression 0.95;
+Transfinite Line {l6} = cellsRadial2 Using Progression 0.85;
+Transfinite Line {l5,-l9, -l11} = cellsRadial2 Using Progression 0.9;
+Transfinite Line {l8,l10,l22} = 0.9*cellsRadial2 Using Progression 1;
+Transfinite Line {-l14} = cellsRadial2 Using Bump .5;
+Transfinite Line {-l16} = cellsRadial2 Using Progression 1;
+//Transfinite Line {l12,l13,l26} = 4/2*cellsRadial2 Using Progression 1.05;
+//Transfinite Line {l15,-l17,-l20} = 4/2*cellsRadial2 Using Progression 0.95;
+Transfinite Line {l12,l13,l26} = 1.7*cellsRadial2 Using Bump .9;
+Transfinite Line {l15,-l17,-l20} = 1.3*cellsRadial2 Using Bump 1;
+
+
+
+Transfinite Line {l18,l19,l30} = cellsPipeLength Using Progression pipeLengthProgression;
+
+//Francois BEAUBERT
+Transfinite Line {s1,s2,s3} = cellsFinLength Using Bump finBump;
+// Meshing of the surfaces
+Transfinite Surface{Amont1,Amont2,Amont3,Amont4,Amont5,Fin1,Fin2,Aval1,Aval2,Aval3,Aval4,Aval5};
+Recombine Surface{Amont1,Amont2,Amont3,Amont4,Amont5,Fin1,Fin2,Aval1,Aval2,Aval3,Aval4,Aval5};
+//
+
+For i In {0:cellsRevolution-1}
+t = (i+1)/cellsRevolution;
+aLayersPoints[i] = 1; // One point per layer
+ // Double sided distribution with d as the streching parameter
+aLayersSize[i] = 1./2.*(1+Tanh(dRevolution*(t-1./2.))/Tanh(dRevolution/2.)); // Size of the layer
+EndFor
+
+revolution[] = Extrude { {0,0,1} , {0,0,100} , 2*Pi/numberOfFins } {
+  Surface{Amont1,Amont2,Amont3,Amont4,Amont5,Fin1,Fin2,Aval1,Aval2,Aval3,Aval4,Aval5}; Layers{aLayersPoints[], aLayersSize[]}; Recombine;
+};
+list_inlet[] = {revolution[5],revolution[6+5]};
+list_outlet[] = {revolution[10*6+3],revolution[11*6+3]};
+
+list_wall[1] = revolution[1*6+4]; // after 1 surface
+list_wall[2] = revolution[4*6+4]; // after 4 surfaces
+list_wall[3] = revolution[6*6+4]; // after 6 surfaces
+list_wall[4] = revolution[9*6+4]; // after 9 surfaces
+list_wall[5] = revolution[11*6+4];// after 11 surfaces
+
+list_fin[] = {Fin1, Fin2, revolution[5*6], revolution[6*6]};
+
+list_centerpiece[1] = revolution[2*6+3]; // after 2 surfaces
+list_centerpiece[2] = revolution[3*6+2]; // after 3 surfaces
+list_centerpiece[3] = revolution[5*6+2]; // after 5 surfaces
+list_centerpiece[4] = revolution[7*6+2]; // after 7 surfaces
+list_centerpiece[5] = revolution[8*6+2]; // after 8 surfaces
+
+list_slip[1]=revolution[0*6+2]; // Amont1
+list_slip[2]=revolution[2*6+2]; // Amont 3
+list_slip[3]=revolution[8*6+3]; // Aval2
+list_slip[4]=revolution[10*6+2]; // Aval4
+
+For i In {2:numberOfFins}
+
+revolution[] = Extrude { {0,0,1} , {0,0,0} , 2*Pi/numberOfFins } {
+  Surface{revolution[0*6],revolution[1*6],revolution[2*6],revolution[3*6],revolution[4*6],revolution[5*6],revolution[6*6],revolution[7*6],revolution[8*6],revolution[9*6],revolution[10*6],revolution[11*6]};Layers{aLayersPoints[], aLayersSize[]}; Recombine;
+};
+
+list_inlet[(i-1)*2+1] = revolution[1*5];
+list_inlet[(i-1)*2+2] = revolution[6+5];
+
+list_outlet[(i-1)*2+1] =revolution[10*6+3];
+list_outlet[(i-1)*2+2] =revolution[11*6+3];
+
+list_wall[(i-1)*5+1] = revolution[1*6+4];
+list_wall[(i-1)*5+2] = revolution[4*6+4];
+list_wall[(i-1)*5+3] = revolution[6*6+4];
+list_wall[(i-1)*5+4] = revolution[9*6+4];
+list_wall[(i-1)*5+5] = revolution[11*6+4];
+
+list_fin[(i-1)*4+1] = revolution[5*6];
+list_fin[(i-1)*4+2] = revolution[6*6];
+
+list_centerpiece[(i-1)*5+1] = revolution[2*6+3];
+list_centerpiece[(i-1)*5+2] = revolution[3*6+2];
+list_centerpiece[(i-1)*5+3] = revolution[5*6+2];
+list_centerpiece[(i-1)*5+4] = revolution[7*6+2];
+list_centerpiece[(i-1)*5+5] = revolution[8*6+2];
+
+list_slip[(i-1)*4+1]=revolution[0*6+2];
+list_slip[(i-1)*4+2]=revolution[2*6+2];
+list_slip[(i-1)*4+3]=revolution[8*6+3];
+list_slip[(i-1)*4+4]=revolution[10*6+2];
+
+EndFor
+
+/*
+* Boundary conditions
+*/
+Physical Surface("Slip") = list_slip[];
+Physical Surface("Inlet") = list_inlet[];
+Physical Surface("Outlet") = list_outlet[];
+Physical Surface("Pipewall") = list_wall[];
+Physical Surface("Fins") = list_fin[];
+Physical Surface("Centerpiece") = list_centerpiece[];
+Physical Volume("Internal") = {1:12*numberOfFins};
+
+Coherence;

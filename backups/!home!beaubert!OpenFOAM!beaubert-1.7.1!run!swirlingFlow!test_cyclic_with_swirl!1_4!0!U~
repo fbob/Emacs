@@ -1,0 +1,51 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.x                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    location    "0";
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    outlet
+    {
+        type            zeroGradient;
+    }
+    inlet
+    {
+      type         swirlFlowRateInletVelocity;
+      flowRate     1.39e-05;	   // Volumetric/mass flow rate [m3/s or kg/s]
+      rpm          100;
+      value        uniform (0 0 0);
+        // type            fixedValue;
+        // value           uniform (0 0 0.1);
+    }
+    pipewall
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    cyclic
+    {
+        type            cyclic;
+        value           uniform (0 0 0);
+    }
+}
+
+
+// ************************************************************************* //

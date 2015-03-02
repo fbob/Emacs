@@ -1,0 +1,102 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.3                                   |
+|   \\  /    A nd           | Web:      http://www.openfoam.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+
+    root            "";
+    case            "";
+    instance        "";
+    local           "";
+
+    class           dictionary;
+    object          sampleDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+setFormat raw;
+surfaceFormat raw;
+
+interpolationScheme cellPoint;
+
+sets
+(
+    z=0.1
+    {
+        type    face;
+        axis    distance;
+	start	(0      0 0.1);
+	end     (-0.018 0 0.1);
+    }
+    z=0.72
+    {
+        type    face;
+        axis    distance;
+	start	(0      0 0.72);
+	end     (-0.018 0 0.72);
+    }
+    z=2.16
+    {
+        type    face;
+        axis    distance;
+	start	(0      0 2.16);
+	end     (-0.018 0 2.16);
+    }
+    z=3.6
+    {
+        type    face;
+        axis    distance;
+	start	(0      0 3.6);
+	end     (-0.018 0 3.6);
+    }
+    z=4.32
+    {
+        type    face;
+        axis    distance;
+	start	(0      0 4.32);
+	end     (-0.018 0 4.32);
+    }
+    // somePoints
+    // {
+    //     type    cloud;
+    //     axis    xyz;
+    // 	points (
+    // 		(0.018 0. -0.01)
+    // 		(0.009 0.01558846 -0.01)
+    // 		(0 0.018 -0.01)
+    // 		);
+    // }
+);
+
+surfaces
+(
+    pipeWall
+    {
+        type patch;
+        patchName pipewall;
+    }
+    plane_z=0.1
+    {
+        type            plane;    // always triangulated
+        basePoint       (0 0 0.1);
+        normalVector    (0 0 1);
+    }
+);
+
+fields
+(
+ //p
+ wallShearStressCyl
+ Ucyl
+);
+
+
+// ************************************************************************* //

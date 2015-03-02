@@ -1,0 +1,5 @@
+(require 'calfw)
+(require 'calfw-org)
+(require 'calfw-ical)
+(cfw:open-ical-calendar "https://www.google.com/calendar/ical/francois.beaubert%40gmail.com/public/basic.ics")
+(provide 'my-calfw)

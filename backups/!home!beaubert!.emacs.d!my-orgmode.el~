@@ -1,0 +1,15 @@
+(require 'org-install)
+;;(require 'org-habit)
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((R . t)
+   (emacs-lisp . t)
+   (latex . t)
+   ))
+(require 'ob-python)
+(add-to-list 'org-export-latex-packages-alist '("" "tikz"))
+(add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+;; fontify code in code blocks
+(setq org-src-fontify-natively t)
+
+(provide 'my-orgmode)

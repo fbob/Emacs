@@ -1,0 +1,7 @@
+echo "Generation of the 3D mesh by Gmsh"
+gmsh -3 ./test_cycl_1_4.geo > mesh.log
+echo "Conversion of the 3D mesh to OpenFOAM"
+gmshToFoam ./test_cycl_1_4.msh >> mesh.log
+echo "Creation of the patches"
+createPatch -overwrite >> mesh.log
+

@@ -1,0 +1,2 @@
+root = /home/beaubert
+root = ssh://beaubert@192.168.8.98//home/beaubert/

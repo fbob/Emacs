@@ -1,0 +1,17 @@
+;; Python et Ipython
+
+(require 'python-mode)
+(add-to-list 'auto-mode-alist '("\\.py\\'" . python-mode))
+
+;; (autoload 'python-mode "python-mode" "Python editing mode." t)
+(setq py-python-command-args '("-pylab" "-colors" "LightBG"))
+(setq ipython-command "/usr/bin/ipython")
+;; (setq ipython-completion-command-string "print(';'.join(__IP.Completer.all_completions('%s')))\n")
+
+(require 'ipython)
+;; (require 'comint)
+;; (define-key comint-mode-map (kbd "M-") 'comint-next-input)
+;; (define-key comint-mode-map (kbd "M-") 'comint-previous-input)
+;; (define-key comint-mode-map [down] 'comint-next-matching-input-from-input)
+;; (define-key comint-mode-map [up] 'comint-previous-matching-input-from-input)
+(provide 'my-python)

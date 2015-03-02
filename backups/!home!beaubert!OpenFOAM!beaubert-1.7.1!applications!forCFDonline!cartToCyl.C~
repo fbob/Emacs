@@ -1,0 +1,208 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+  \\    /   O peration     |
+  \\  /    A nd           | Copyright (C) 1991-2010 OpenCFD Ltd.
+  \\/     M anipulation  |
+  -------------------------------------------------------------------------------
+  License
+  This file is part of OpenFOAM.
+
+  OpenFOAM is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+  for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+  Application
+  cartToCyl
+
+  Description
+  Transform the U and wallShearStress Field from cartesian to cylindrical coordinates system at
+  each time
+
+  \*---------------------------------------------------------------------------*/
+
+#include "fvCFD.H"
+#include "cylindricalCS.H"
+#include "mathematicalConstants.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+int main(int argc, char *argv[])
+{
+  timeSelector::addOptions();
+
+#include "setRootCase.H"
+#include "createTime.H"
+
+  instantList timeDirs = timeSelector::select0(runTime, args);
+
+#include "createMesh.H"
+
+  Info<< " Convert cartesian system (x, y, z) to cylindrical system (r, teta, z)" <<endl;
+
+  forAll(timeDirs, timeI)
+    {
+      runTime.setTime(timeDirs[timeI], timeI);
+      Info<< "Time = " << runTime.timeName() << endl;
+      mesh.readUpdate();
+
+      cylindricalCS ccs
+        ("ccs",
+         point (0, 0, 0), // center point of ccs
+         vector(0, 0, 1), // axis of ccs
+         vector(1, 0, 0),// base axis for cylindrical angle
+         false
+         ); //keyword false: Use radians since cos and sin work with radians
+
+      //Read the vectors pointing from the origin of the mesh to the cell centers
+
+      volVectorField cc = mesh.C();
+
+      //The vector field cc will now be transformed into cylindrical coordinates
+      volVectorField ccCyl
+        (
+         IOobject
+         (
+          "ccCyl",
+          runTime.timeName(),
+          mesh,
+          IOobject::NO_READ,
+          IOobject::NO_WRITE
+          ),
+         mesh,
+         vector(0,0,0)
+         );
+
+      ccCyl.internalField() = ccs.localVector(cc.internalField());
+
+      forAll (ccCyl.boundaryField(), patchI)
+        {
+          ccCyl.boundaryField()[patchI] = ccs.localVector(cc.boundaryField()[patchI]);
+	  // if (ccCyl.boundaryField()[patchI].component(vector::Y) < 0.0)
+	  //   {
+	  // Info << "ccCyl.boundaryField = " << ccCyl.boundaryField()[patchI].component(vector::Y);
+	  // }
+        }
+      //cc.write();
+
+
+      volScalarField theta = ccCyl.component(vector::Y);
+      //now we have the all important theta of all cell centre postitions,
+      //from which we can construct the following transformation tensor:
+      /*
+        [cos(theta) sin(theta) 0
+        -sin(theta) cos(theta) 0
+        0 0 1]
+      */
+
+      forAll (ccCyl, patchI)
+	{
+	  if (ccCyl[patchI].component(vector::Y) <= 0.0)
+	    {
+	      // Info << "Old Theta < 0 " << ccCyl[patchI].component(vector::Y)<< " New Theta < 0 " << ccCyl[patchI].component(vector::Y)+ 2*mathematicalConstant::pi << endl;
+	      ccCyl[patchI].component(vector::Y) =+ 2*mathematicalConstant::pi;
+	    }
+	}
+      ccCyl.write();
+
+      // transformation of velocity field U from cartesian -> cylindrical
+      IOobject Uheader
+        (
+         "U",
+         runTime.timeName(),
+         mesh,
+         IOobject::MUST_READ
+         );
+
+      // Check U exists
+      if (Uheader.headerOk())
+        {
+          mesh.readUpdate();
+
+          Info<< " Reading U" << endl;
+          volVectorField U(Uheader, mesh);
+
+          Info<< " converting U" << endl;
+
+          volVectorField Ucyl
+            (
+             IOobject
+             (
+              "Ucyl",
+              runTime.timeName(),
+              mesh,
+              IOobject::NO_READ,
+              IOobject::AUTO_WRITE
+              ),
+             mesh,
+             dimensionedVector("Ucyl",dimensionSet(0,1,-1,0,0,0,0),vector::zero)
+             );
+
+          Ucyl.replace(vector::X, (U.component(vector::X)*cos(theta))+(U.component(vector::Y)*sin(theta)));//Ur
+          Ucyl.replace(vector::Y, (-1*U.component(vector::X)*sin(theta))+(U.component( vector::Y)*cos(theta)));//Uteta
+          Ucyl.replace(vector::Z, U.component(vector::Z)); //Uz
+          Ucyl.write();
+
+        }
+      else
+        {
+          Info<< " No U field exist" << endl;
+        }
+      // transformation of wallShearStress field from cartesian -> cylindrical
+      IOobject wallShearStressheader
+        (
+         "wallShearStress",
+         runTime.timeName(),
+         mesh,
+         IOobject::MUST_READ
+         );
+
+      // Check wallShearStress if exists
+      if (wallShearStressheader.headerOk())
+        {
+          mesh.readUpdate();
+
+          Info<< " Reading wallShearStress" << endl;
+          volVectorField wallShearStress(wallShearStressheader, mesh);
+
+          Info<< " Converting wallShearStress" << endl;
+
+          volVectorField wallShearStressCyl
+            (
+             IOobject
+             (
+              "wallShearStressCyl",
+              runTime.timeName(),
+              mesh,
+              IOobject::NO_READ,
+              IOobject::AUTO_WRITE
+              ),
+             mesh,
+             dimensionedVector("wallShearStresscyl",dimensionSet(0,2,-2,0,0,0,0),vector::zero)
+             );
+
+          wallShearStressCyl.replace(vector::X, (wallShearStress.component(vector::X)*cos(theta))+(wallShearStress.component(vector::Y)*sin(theta))); // wallShearStressR
+          wallShearStressCyl.replace(vector::Y, (-1*wallShearStress.component(vector::X)*sin(theta))+(wallShearStress.component( vector::Y)*cos(theta)));//wallShearStressTheta
+          wallShearStressCyl.replace(vector::Z, wallShearStress.component(vector::Z)); //wallShearStressZ
+          wallShearStressCyl.write();
+        }
+      else
+        {
+          Info<< " No wallShearStress field exist" << endl;
+        }
+    }
+  return 0;
+}
+
+
+
+// ************************************************** *********************** //

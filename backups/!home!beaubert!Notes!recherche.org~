@@ -1,0 +1,25 @@
+* Contrôle de la turbulence
+** Cylindre en rotation
+** Cavité profonde
+* Jets
+** GDR AMETH
+*** Journée Ameth sur les jets <2008-07-02 mer>
+    Pour les exposés on peut déjà noter:
+    1. Analyse expérimentale de l’amélioration des transferts convectifs
+       sur un disque tournant soumis à un jet impactant
+    2. Modélisation de la dynamique de l’écoulement et des transferts sur
+       un disque tournant soumis à un jet impactant
+
+** Thèse de Stéphane
+*** Reunion a Douai le <28/03/08>
+Réunion d'avencement de la these
+*** TODO Faires les maillages 2D
+Générer les maillages 2D à partir des macros Gambit
+Voir le fichier file:/home/beaubert
+*** TODO Lancer les calculs 2D en LES
+*** TODO Péparer la config 3D
+Voir ce qui a déjà été fait en 3D avec ftp://
+* Outils de calcul
+** OpenFOAM
+** Matplotlib
+** Paraview

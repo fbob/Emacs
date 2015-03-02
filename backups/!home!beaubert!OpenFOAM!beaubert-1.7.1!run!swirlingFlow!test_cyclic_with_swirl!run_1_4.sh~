@@ -1,0 +1,7 @@
+echo "Generation of the 3D mesh by Gmsh"
+gmsh -3 1_4_swirler_HB.geo > mesh.log
+echo "Conversion of the 3D mesh to OpenFOAM"
+gmshToFoam 1_4_swirler_HB.msh >> mesh.log
+echo "Creation of the patches"
+createPatch -overwrite >> mesh.log
+

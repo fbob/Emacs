@@ -1,0 +1,148 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# ************************************************
+# Spectral analysis of a discret signal x(n):
+# N = length of the signal
+#
+# Author        : Francois BEAUBERT
+# Creation Date : 29/01/2007
+# Last update   : 19/06/2007
+# ************************************************
+
+from scipy import *
+from pylab import *
+
+from scipy import interpolate
+
+# Modification des parametres par defaut
+# rcParams['legend.loc'] = 'best'
+rcParams['legend.numpoints'] = 1
+
+#lines.linewidth   : 1.0     # line width in points
+#lines.linestyle   : -       # solid line
+#lines.color       : blue
+#lines.marker      : None    # the default marker
+rcParams['lines.markeredgewidth'] = 1
+#lines.markersize  : 6               # markersize, in points
+#lines.dash_joinstyle : miter        # miter|round|bevel
+#lines.dash_capstyle : butt          # butt|round|projecting
+#lines.solid_joinstyle : miter       # miter|round|bevel
+#lines.solid_capstyle : projecting   # butt|round|projecting
+#lines.antialiased : True            # render lines in antialised (no jaggies)
+
+#axes.hold           : True    # whether to clear the axes by default on
+#axes.facecolor      : white   # axes background color
+#axes.edgecolor      : black   # axes edge color
+rcParams['axes.linewidth'] = 1
+#axes.linewidth      : 1.0     # edge linewidth
+#axes.grid           : False   # display grid or not
+#axes.titlesize      : large   # fontsize of the axes title
+#axes.labelsize      : medium  # fontsize of the x any y labels
+#axes.labelcolor     : black
+#axes.axisbelow      : False   # whether axis gridlines and ticks are below
+
+#xtick.major.size     : 4      # major tick size in points
+#xtick.minor.size     : 2      # minor tick size in points
+#xtick.major.pad      : 4      # distance to major tick label in points
+#xtick.minor.pad      : 4      # distance to the minor tick label in points
+#xtick.color          : k      # color of the tick labels
+#xtick.labelsize      : medium # fontsize of the tick labels
+#xtick.direction      : in     # direction: in or out
+
+#ytick.major.size     : 4      # major tick size in points
+#ytick.minor.size     : 2      # minor tick size in points
+#ytick.major.pad      : 4      # distance to major tick label in points
+
+#
+# Files and path informations
+#
+
+directory  = './'
+filename   = 'surfaces/2000/wallShearStress_pipeWall.raw'
+
+#filepath    = directory + filename
+
+#
+# Variables definition from loaded files
+#
+
+x,y,z,taux,tauy,tauz = loadtxt(filename, comments=')', delimiter=None,converters=None, skiprows=2, usecols=(0,1,2,3,4,5), unpack=True )
+#
+# Computation of the new variables
+#
+
+#def cartesianToPolar(x, y):
+#    r = sqrt(x**2+y**2)
+#    phi = arccos(x/r)
+#    if y < 0.:
+#        phi = 2 * pi - phi
+#    return r, phi
+#
+#r,theta   = cartesianToPolar(x,y)
+#r2,theta2 = cartesianToPolar(x2,y2)
+
+d = 0.036
+
+tau = sqrt(taux**2+tauy**2+tauz**2)
+tau2 = sqrt(taux2**2+tauy2**2+tauz2**2)
+tau3 = sqrt(taux3**2+tauy3**2+tauz3**2)
+
+tau_min = min(tau)
+tau2_min = min(tau2)
+
+tau_max = max(tau)
+tau2_max = max(tau2)
+
+theta   = arctan2(y,x) + pi
+theta2  = arctan2(y2,x2) + pi
+theta3  = arctan2(y3,x3) + pi
+
+r3 = sqrt(x3**2+y3**2)
+
+a=column_stack((theta,tau))
+a2=column_stack((theta2,tau2))
+b=a[a[:,0].argsort()]
+b2=a2[a2[:,0].argsort()]
+
+#
+# Radial sampling
+#
+
+#dr=r[1]-r[0]                            # Time step dt=1/Fe
+#Nr=len(r)                               # Number of time samples
+
+#
+# Plot
+#
+
+#subplot(221)
+#plot(b[:,0],b[:,1]/tau_min,'wo',ms=15,label='Cyclic boundary condition')
+#plot(b2[:,0],b2[:,1]/tau2_min,'ks-',label=r'Full size domain (2$\pi$ revolution)')
+#xlabel(r'$\theta (rad)$')
+#ylabel(r'$\tau / \tau_{min}$')
+plot(z/d,tau/tau_max, 'wo', ms=15, label='Cyclic boundary condition')
+plot(z2/d,tau2/tau2_max,'ks-',label=r'Full size domain (2$\pi$ revolution)')
+xlabel(r'$z/D$')
+ylabel(r'$\tau / \tau_{max}$')
+#legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3)
+legend()
+
+#
+# Calcul de la difference max de temperature
+#
+
+#f = interpolate.interp1d(rnum2, Tnum)
+#
+#dT = Tcamera+273.15 -f(r)
+#dTmean = mean(dT)*ones(size(r))
+
+#subplot(223)
+#grid()
+#plot(r,dT,'ow',label=r'$\Delta T= T_{exp} - T_{Num}$')
+#plot(r,dTmean,'k-',linewidth=2,label=r'mean($\Delta T$)')
+#xlabel('r(m)')
+#ylabel('T(K)')
+#legend()
+
+show()

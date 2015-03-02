@@ -1,0 +1,66 @@
+Bonjour à tous,
+
+Voici quelques remarques sur suite à votre présentation de vendredi.
+
+Ne tenez pas compte de mes remarques si vous avez déjà fait des modifications
+ou si elles ne vous semblent pas pertinentes.
+Il y a peut etre des choses que je n'ai pas compris auquel posez vous quend m^eme des questions sur la fçon dont vous les présenter justement.
+
+Il s'agit ici de sugestions et c'est VOTRE travail.
+
+N'hésitez pas à me contacter si vous voulez qu'on en reparle.
+Bon courage à tous !
+
+Forme:
+-----
+1) Numéros des slides pour y faire référence
+2) Préciser vos noms sur la page de titre si il y a assez de place !
+
+Fond:
+----
+1) Décrire le sujet sur la page de titre
+2) Mettre le cahier des charges avant la réalisation effectuée
+3) Dans le cahier des charges, préciser aussi:
+  - la plage d'allonge (par exemple 20"-32")
+  - la hauteur max des arcs (par exemple 70")
+4) Sur l'image du banc essayer de montrer l'allonge et la heuteur de l'arc
+5) Le manche de l'arc est dit poignée !
+6) Essai caméra rapide:
+   - citer la personne plutot que le batiment
+   - exposer encore plus clairement l'objectif de la caméra rapide:
+     analyse qualitative pour identifier les phénomènes vibratoires et savoir où placer les capteurs
+   - vous n'avez pas parlé des modes propres de la corde qui pourraient venir exciter les branches de l'arc
+7) Essais accéléromètres:
+   - Préciser les objectifs de ces mesures quantitatives. Il est à mon sens double:
+     + tester la faisabilité du protocol de mesures: ici masse de la fleche et allonge donc puissance de l'arc
+     + tester l'influence de certains parmètres sur les vibrations: amplitudes, amortissement, etc ...
+   - Essayez de montrer que vous avez une démarche scientifique structurée et que vous savez où vous allez et que vous ne faites pas des essais pour faire des essais
+   - Préciser aussi les différents types de fixations possibles pour jusitfier celui utilisé (à la cire)
+   - Dessins pour le n° des capteurs et rajouter les n° à coté des signaux.
+   - Avez vous mis un capteur au niveau de la poignée et si c'est non pourquoi ?
+   - Graphique de la FFT illisible.
+   - Vous faites la FFT de quoi et vous obtenez quoi
+   - Mettez aussi des équations pour décrire et expliquer ce que vous mesurez
+   - Vous dites qu'il ya une Frequence marquée à 66Hz pour tous les essais. MLontrez alors d'autres résultats illustrant votre propos.
+   - A ce titre pourquoi ne pas faire un tableau montrant tous les essais que vous avez réalsiés pour souligner l'ampleur du travail effectué
+   - Préciser le poids des flèches en grammes, grains, etc ... (la norme en archerie)
+   - Relier l'allonge à la puissance.
+   - Comment expliquer vous les différences avec l'essai à 28".
+     Votre protocle de mesure est il reproductible ? Quel tests devait vous faire pour vous en assurer ?
+   - Annalyser et recouper plus en profondeur vos résultats:
+     + préciser si il ya des différences entre les amplitudes entre les différents points de mesures
+     + quelle est la durée d'amortissement ?
+     + Est elle la meme pour tous les essais ?
+     + Quelle est l'influence du poid de la flèche ou de la puissance sur les amplitudes et la durée d'amortissement.
+8) Essais vibromètre laser:
+   - Insister bien sur l'intéret par rapport aux accéléromètres, entre autre: mesure optique non intrusif, ne perturbe pas la dynamique des branches
+   - Si vous avez assez de temps pour la présentation un petit schéma décrivant le principe de mesure.
+   - Vous n'avez pas beaucoup commenté la courbe. Pouvez vous la corréléer avec les autres résultats: fréquence dominantes, amplitudes, durée d'amortissement, etc ...
+
+9) Conclusion et perspectives:
+   - Donner l'adresse de votre site web et des vidéos sur youtube.
+   - Une perspective très intéressante que vous n'avez pas évoquée est le traitement des images de la caméra rapide.
+     Avantage: méthode non intrusive qui donne une information globale et non locale.
+     Inconvénient: précison de la mesure, le traitement doit etre validé avec des mesures plus précises.
+   - Si je ne me trompe pas, à aucun moment vous n'avez essayé d'intégrer les signaux pour avoir une idée des déplacements.
+

@@ -1,0 +1,52 @@
+;;; -*- coding: utf-8 -*-
+
+;; ----- ido-last-directory-list -----
+(
+ ("/home/beaubert/OpenFOAM/beaubert-1.7.1/run/swirlingFlow/" . "test_cyclic_with_swirl/")
+ ("/home/beaubert/" . ".emacs.d/")
+)
+
+;; ----- ido-work-directory-list -----
+(
+ "~/"
+ "~/Bureau"
+ "~/Documents"
+)
+
+;; ----- ido-work-file-list -----
+(
+ "preferences"
+ "my-orgmode.el"
+ "my-calfw.el"
+ "examen2011_sept_julien.tex"
+ "examen2011_sept.tex"
+ "my-python.el"
+ "post.py"
+ "my-tabbar.el"
+ "my-visual.el"
+ ".emacs.starter"
+ "my-autopair.el"
+ ".emacs"
+)
+
+;; ----- ido-dir-file-cache -----
+(
+ ("/home/beaubert/.lyx/" (19914 6580) "clipart/" "kbd/" "cache/" "ui/" "bstFiles.lst" "../" "layouts/" "lyxrc.defaults" "session" "examples/" "textclass.lst" "bind/" "clsFiles.lst" "./" "scripts/" "lyxmodules.lst" "bibFiles.lst" "configure.log" "preferences" "images/" "doc/" "packages.lst" "templates/" "styFiles.lst")
+
+ ("/home/beaubert/.emacs.d/" (20008 27263) "my-comments.el" "my-commands.el" "el-get/" "backups/" "ergoemacs_1.9.3.1/" "my-ido.el" "../" "my-calendar.el" ".#my-orgmode.el" "init.el~" "emacs-calfw/" "my-windmove.el" "my-calfw.el" "ecb/" "my-tikz.el" "my-drag-stuff.el" "el-get.old/" "image-dired/" "my-bookmarks.el" "%backup%~" "my-python.el" "my-color-theme.el" "#my-orgmode.el#" "ede-projects.el" "my-orgmode.el" "my-buffermove.el" "my-calfw.el~" "ergoemacs_1.9.3.1.zip" "macro-math.el" "my-visual.el~" "my-autopair.el" "./" "my-tabbar.el" "auto-save-list/" "my-auto-install.el" "init.el" "weekly-view.el" "ac-comphist.dat" "my-keybindings.el" "#my-tabbar.el#" "my-visual.el" "my-python.el~" "my-workgroups.el" "my-ecb.el" "init.el.save" "elpa/" "my-ede.el" "my-calendar.el~" "saveplace" "url/" "my-completion.el" "my-ide-skel.el" "my-vimpulse.el")
+
+ ("/home/beaubert/" (20008 23566) "styles.en.pdf" ".htoprc" "kali0/" "guiqwt-2.1.0/" ".pulse/" "Dev/" "test.org" "bin/" "PyFoam-0.5.5.tar.gz" ".emacs-custom.el.before_ecb_2.40__1" ".thunderbird/" ".gnome2/" ".gtk-custom-papers" "Untitled.tex" "usb-stick/" "matplotlib-1.0.1.tar.gz" "Vidéos/" "discret_x.ggb" ".dbus/" ".qt/" ".gmsh-options" "Bureau/" "NetBeansProjects/" "test.tex" ".xsession-errors" ".avidemux/" ".macromedia/" "test.pdf" ".emacs.d.old/" ".emacs-custom.el" ".local/" ".bash_history" "butterw-spyder/" "embedding_in_qt4.py" ".gmsh-errors" "../" "20060817lama1.jpg" ".emacs.save~" "imgp0081t.jpg" ".gnome2_private/" ".taskrc" ".adobe/" "salome_6.3.0/" "Recherche/" ".emacs-places" "Photos/" ".gmshrc" ".cache/" "DocFluent/" "gmsh-2.5.0/" ".thumbnails/" ".gconf/" ".dia/" ".Scilab/" ".sudo_as_admin_successful" "spyder-2.0.10/" ".gconfd/" ".asy/" "matplotlib-1.0.1/" ".emacs.save" ".java/" ".dmrc" "python-guiqwt_2.1.3-1_i386.deb" ".pki/" "diary" ".lesshst" "veusz.vst" "titi.py" ".smex-items" ".subversion/" ".fltk/" ".pulse-cookie" "texput.log" ".ecb-tip-of-day.el" ".gnuplot-wxt" "welcome.fr.pdf" ".vimrc" ".TeXmacs/" "Public/" ".matplotlib/" "g3data-1.5.4.tar.gz" ".bashrc~" ".nevernote/" "tikz2pdf_temp.tex" "dwhelper/" "web_bookmarks/" "texmf.old/" "manatee/" ".bash_logout" "test.wrl" ".emacs~" "spyder-2.0.10.zip" ".TaskCoach/" ".gcalcirc" "tata.vsz" ".bzr.log" ".gstreamer-0.10/" ".config/" "dalai-lama.jpg" ".redcar/" ".jahuwaldt.Digitizer.props" "eps2pgf-0.7.0 (1)/" "./" ".inkscape/" "data.vsz" "python-guidata_1.3.1-1_all.deb" "Recherche_bis/" "smb.conf.new" ".ssh/" "toto.py" ".emacs-custom.el.before_ecb_2.40" ".ido.last~" "Images/" "test.out" ".directory" ".fontconfig/" ".profile" "netbeans-7.0/" "backup.log" "Comsol/" "_region_.log" "tata.py" "texmf/" ".Xauthority" "guidata-1.3.0.zip" ".vim/" ".emacs.d/" ".libreoffice/" "Fluent/" ".recentf" "test.pov" "_region_.tex" ".netbeans/" "VirtualBox/" "Fortune/" ".ipython/" "Notes/" ".ido.last" "Code_Saturne/" ".nbi/" "2009-2010/" "DUPLICATED_FILES.txt" "Backup/" ".recentf~" "CodeSaturne/" ".VirtualBox/" ".gvfs/" ".spyder2/" "lama.jpg" ".task/" "prv_test.log" "cirkuit-0.3.2/" "test.vrml" ".kderc" "OpenFOAM/" "prv_test.org.log" ".gtkrc-2.0-kde4" "g3data-1.5.4/" "test.lyx" "guidata-1.3.0/" "Téléchargements/" ".esd_auth" "Documents/" ".iTeXmacs/" "guiqwt-2.1.0.zip" ".omniORB_V6_3_0_public.cfg" ".texmf-var/" ".fonts.conf" "Modèles/" "porc (4).jpg" ".viminfo" "test.log" ".kdevduchain/" "test.aux" "tmp_Saturne/" ".lyx/" ".vimshell/" "test.x3d" "Musique/" ".recently-used" "jpgfdraw-0.5.5b-us/" "backup.sh" ".mozilla/" ".kde/" "Cours/" ".gnupg/" ".emacs.starter" ".bashrc" "kde/" "tmp/")
+
+ ("/home/beaubert/Documents/" (20007 56140) "20071119_Docs-personnel.zip" "sdarticle-2.pdf" "sidebar.png" "CV_pelle.doc" "teleir/" "Lyx/" "Vpn/" "test.tex" "CV_pelle.pdf" "Ensiame/" "string_test.pdf" "../" "test" "MaisonCroisé/" "Wordpress/" "Texmacs/" "sdarticle_LES2.pdf" "test.tex~" "CSE/" "Dynamic+Spine+Calculator+Rev1.xls_2.ods" "Sunbird/" "PgfTikz/" "post.py" "test.swf" "cv_beaubert.doc" "Gnome/" "LateX/" "glob" "os" "./" "Thunderbird/" "Foam.egg-info/" "dist/" "Ubuntu/" "EMN/" "slides_hybrid2.pdf" "Palm/" "Asymptote/" "Report.pdf" "printcap" "Evaluation DLR Sylain Frommlet.pdf" "20071122_Docs-personnel.zip" "Test/" "bench.lyx" "cv_beaubert_en.doc" "cv_beaubert_en.pdf" "OpenFOAM/" "Kde/" "AC-UVHC.der" "hs_err_pid8995.log" "AC-UVHC.pem" "build/" "tags" "LinuxConfig/" "textext-0.4.4.tar.gz" "Perso/" "spectre_bruit_eolienne")
+
+ ("/home/beaubert/Cours/ENSIAME/MecaniqueDesFluides/Examens/" (19994 48648) "partiel.eps" "rattrapage2011.eps" "examen2011_sept_julien.tex" "examen2011_sept.lyx~" "partiel.tex" "vanne.pdf" "../" "partiel.pdf" "rattrapage2011.lyx" "examen2011_sept.lyx" "partiel.prv/" "talus.svg" "examen2011.lyx" "rattrapage2011.tex" "talus.pdf" "partiel.lyx" "partiel.log" "examen2011.tex" "./" "examen2011.lyx~" "vanne.svg" "examen2011.pdf" "examen2011_sept.tex" "prv_partiel.log")
+
+ ("/home/beaubert/OpenFOAM/beaubert-1.7.1/run/swirlingFlow/test_cyclic_with_swirl/" (19977 31031) "pipemesh.m4" "2000/" "../" "1_4_swirler_HB.geo~" "sets/" "surfaces/" "mplot3d.py" ".spyderproject" "pcolormesh.py" "post.py" "test_cycl.geo~" "test_cycl_full.geo" "0/" "./" "1_4_swirler.geo" "1_4_swirler_HB.geo" "system/" "constant/" ".recently-used" "test_cycl.geo")
+
+ ("/home/beaubert/OpenFOAM/beaubert-1.7.1/run/swirlingFlow/" (19962 3686) "laminarHeatedPipe/" "case_25_Re=500/" "case_24_Re=500/" "case_25_turb/" "case_base/" "test_cyclic_with_swirl/" "case_24_turb/" "case_23/" ".#swirlingFlow.org" "case_09(Re=2000_2Pi)/" "case_01/" "case_24/" "../" "swirler_HB2.tar.gz" "swirlingFlow.org" "case_base_2Pi/" "#swirlingFlow.org#" "case_23_Re=500/" "case_12/" "swirler_HB2/" "sb - calculation tutorials - laminar pipe flow.html" "case_10/" "./" "test_swirler/" ".directory" "case_meshRefinement/" "case_base.save/" "laminarHeatedPipe_buoyantBoussinesqSimpleFOAM/" "testMesh/" "HEFC2011_mesh2/" "case_base.tar.gz" "case_11/" "HEFC2011_mesh1/" "swirler_HB_Re_500_case_01/" "case_meshRefinement_2PI/" "eproject.cfg" "case_25/" "HEFC/" "swirlingFlow.org~" "sb - calculation tutorials - laminar pipe flow_files/" "HEFC2011_base/")
+
+ ("/home/beaubert/OpenFOAM/beaubert-1.7.1/run/swirlingFlow/case_01/" (19934 3242) "mesh_sensitivity_x=-0.018_y=0.pdf" "post_surface.py" "mesh_sensitivity_circle_z=2.16.png" "post_mesh_radial_z=cte_2Pi.py" "mesh_sensitivity_circle_z=4.32.pdf" "2000/" "mesh_sensitivity_circle_z=0.72.pdf" "mesh_sensitivity_circle_z=0.72.png" "mesh_sensitivity_U__turb_azimut_z=0.72.pdf" "mesh_sensitivity_radial_z=0.72.png" "uz_inlet.png" "case_01.OpenFOAM" "cyclic_versus_full_domain_x=-0.018_y=0.png" "post_mesh_lines_2PI.py~" "../" "mesh_sensitivity_x=-0.018_y=0_2PI.pdf" "post_mesh.py~" ".ropeproject/" "mesh_patches.png" "uz_inlet_patch.png" "mesh_sensitivity_circle_z=3.6.pdf" "sensitivity_x=-0.018_y=0_turb.pdf" "mesh_XY.pvsm" "post_mesh_lines.py~" "tau_circle_z=0.1.csv" "sets/" "surfaces/" "tau.pvsm" "mesh_sensitivity_radial_z=0.72.pdf" "mesh_sensitivity_U__turb_azimut_z=-0.03.pdf" ".spyderproject" "cyclic_versus_full_domain_z=0.1.png" "tau_line.pvsm" "mesh.pvsm" "1_4swirler.vtk" "post_mesh_radial_z=cte.py" "tau_x=-0.018_y=0.csv" "mesh_sensitivity_U__turb_azimut_z=-0.01.pdf" "tau_circle_z=3.6.csv" "mesh_sensitivity_tau_turb_azimut_z=0.1.pdf" "mesh_XY_revolved.png" "mesh_sensitivity_tau_turb_azimut_z=1.5.pdf" "post.py" "tau_circle_z=4.32.csv" "mesh_sensitivity_radial_z=0.1.pdf" "mesh_sensitivity_radial_z=3.6.png" "mesh_sensitivity_circle_z=2.16.pdf" "post_data.tar.gz" "tau_circle_z=0.72.csv" "geometry_revolved.png" "post_mesh_radial_z=cte.py~" "0/" "mesh_sensitivity_circle_z=0.1.png" "uz_inlet.pvsm" "mesh_sensitivity_circle_z=0.1_2PI.png" "./" "mesh_sensitivity_radial_z=4.32.png" "1_4_swirler.geo" "mesh_sensitivity_x=-0.018_y=0.png" "tau_circle_z=2.16.csv" "tau_lines.pvsm" "mesh_XY_2.png" "post_mesh_2PI.py~" ".directory" "tau_x=-0.018_y=0_2PI.csv" "u_z=cte_plans.pvsm" "mesh_sensitivity_radial_z=4.32.pdf" "system/" "post_surface.py~" "post_mesh_lines.py" "post_mesh_lines_2PI.py" "mesh_sensitivity_circle_z=3.6.png" "mesh_sensitivity_circle_z=0.1_2PI.pdf" "mesh_sensitivity_radial_z=0.1.png" "log" "mesh_sensitivity_radial_z=2.16.pdf" "mesh_sensitivity_U__turb_azimut_z=1.5.pdf" "mesh_XY.png" "mesh_sensitivity_radial_z=2.16.png" "mesh_sensitivity_tau_turb_azimut_z=-0.01.pdf" "post_mesh.py" "run_1_4.sh" "mesh_sensitivity_U__turb_azimut_z=0.1.pdf" "constant/" "mesh_sensitivity_radial_z=3.6.pdf" "mesh_sensitivity_tau_turb_azimut_z=-0.03.pdf" "post_mesh_2PI.py" "mesh_sensitivity_tau_turb_azimut_z=0.72.pdf" "post_mesh_radial_z=cte_2Pi.py~" "tau_circle_z=0.1_2PI.csv" "mesh_sensitivity_circle_z=0.1.pdf" "mesh_sensitivity_circle_z=4.32.png")
+)
+
+;; ----- ido-unc-hosts-cache -----
+t

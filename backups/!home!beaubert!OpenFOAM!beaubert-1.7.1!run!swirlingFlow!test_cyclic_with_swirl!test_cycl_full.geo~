@@ -1,0 +1,137 @@
+/*
+* Gmsh script to generate the swirling device mesh
+*
+* Filename: swirler.geo
+* Description: Generation of the swirling device geometry and mesh with Gmsh
+* This script is based on the previous work of Halldor PALSSON(2) and Sylvain LALOT(1).
+*
+*  Author(s): Francois BEAUBERT(1), Sylvain LALOT(1), Hadrien BAUDUIN(1)
+*
+* (1) TEMPO EA4542, University of Valenciennes, France
+* (2) Faculty of Industrial Engineering, Mechanical Engineering and Computer Science, University of Iceland
+
+* Created: 07/01/2011
+* By: Francois BEAUBERT
+* Version: 1.0 alpha-3
+* Changelog:
+* 21/01/20111 by Sylvain LALOT
+* 25/01/2011 by Francois BEAUBERT
+* 16/02/2011 by Sylvain LALOT
+* 05/05/2011 by Hadrien BAUDUIN
+* 10/06/2011 by Hadrien BAUDUIN
+*
+* Usage:
+* o use ./run.sh
+*/
+Geometry.AutoCoherence = 0;
+
+Geometry.Tolerance = 1e-8; //1e-6;
+
+Mesh.RecombinationAlgorithm = 0; //0: standard, 1: blossom
+
+/*
+* Geometric parameters
+*/
+
+pipeDiameter   = 0.036;
+pipeLength = 0.32;
+
+/*
+* Meshing parameters
+*/
+
+radialProgression  = 0.97;
+radialCprogression = 0.98;
+pipeProgression    = 1.0020;
+
+cellsRadial = 25;	    // Number of cells in the radial direction
+
+/*
+* Code
+*/
+
+CW = pipeDiameter/6;
+CX = pipeDiameter*Cos((Pi/4))/2;
+CZ = pipeDiameter*Sin((Pi/4))/2;
+
+// Points for the tube
+p0 = newp; Point(p0) = {0.0,0.0, 0.0} ;
+p1 = newp; Point(p1) = { CW, CW, 0.0} ;
+p2 = newp; Point(p2) = {-CW, CW, 0.0} ;
+p3 = newp; Point(p3) = {-CW,-CW, 0.0} ;
+p4 = newp; Point(p4) = { CW,-CW, 0.0} ;
+p5 = newp; Point(p5) = { CX, CZ, 0.0} ;
+p6 = newp; Point(p6) = {-CX, CZ, 0.0} ;
+p7 = newp; Point(p7) = {-CX,-CZ, 0.0} ;
+p8 = newp; Point(p8) = { CX,-CZ, 0.0} ;
+
+//Lines
+
+l1= newl; Line(l1) = {p1, p2};
+l2= newl; Line(l2) = {p2, p3};
+l3= newl; Line(l3) = {p3, p4};
+l4= newl; Line(l4) = {p4, p1};
+
+l5= newl; Line(l5) = {p1, p5};
+l6= newl; Line(l6) = {p2, p6};
+l7= newl; Line(l7) = {p3, p7};
+l8= newl; Line(l8) = {p4, p8};
+
+c1= newl; Circle(c1) = {p5, p0, p6};
+c2= newl; Circle(c2) = {p6, p0, p7};
+c3= newl; Circle(c3) = {p7, p0, p8};
+c4= newl; Circle(c4) = {p8, p0, p5};
+
+//
+// Surfaces
+
+Inlet1 = newll;
+Inlet1 = news;
+Line Loop(Inlet1) = {l1, l2, l3, l4};
+Plane Surface(Inlet1) = {Inlet1};
+
+Inlet2 = newll;
+Inlet2 = news;
+Line Loop(Inlet2) = {l5, c1, -l6, -l1};
+Plane Surface(Inlet2) = {Inlet2};
+
+Inlet3 = newll;
+Inlet3 = news;
+Line Loop(Inlet3) = {l6, c2, -l7, -l2};
+Plane Surface(Inlet3) = {Inlet3};
+
+Inlet4 = newll;
+Inlet4 = news;
+Line Loop(Inlet4) = {l7, c3, -l8, -l3};
+Plane Surface(Inlet4) = {Inlet4};
+
+Inlet5 = newll;
+Inlet5 = news;
+Line Loop(Inlet5) = {l8, c4, -l5, -l4};
+Plane Surface(Inlet5) = {Inlet5};
+
+/*****
+* Mesh
+******/
+
+Transfinite Line {l1,l2,l3,l4} = cellsRadial/2 Using Progression 1;
+Transfinite Line {l5,l6,l7,l8} = cellsRadial/2 Using Progression 1;
+Transfinite Line {c1,c2,c3,c4} = cellsRadial/2 Using Progression 1;
+
+Transfinite Surface{Inlet1,Inlet2,Inlet3,Inlet4,Inlet5};
+Recombine Surface{Inlet1,Inlet2,Inlet3,Inlet4,Inlet5};
+
+extrudeVol[] = Extrude {0,0,pipeLength} {
+  Surface{Inlet1,Inlet2,Inlet3,Inlet4,Inlet5}; Layers{50}; Recombine;
+};
+
+/*
+* Boundary conditions
+*/
+
+Physical Surface("Inlet") = {Inlet1,Inlet2,Inlet3,Inlet4,Inlet5};
+Physical Surface("Outlet") = {extrudeVol[0],extrudeVol[6],extrudeVol[12],extrudeVol[18],extrudeVol[24]};
+Physical Surface("Pipewall") = {extrudeVol[9],extrudeVol[15],extrudeVol[21],extrudeVol[27],extrudeVol[33]};
+Physical Volume("Internal") = {1:5};
+
+Coherence;

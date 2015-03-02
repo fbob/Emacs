@@ -1,0 +1,86 @@
+#+LATEX_HEADER: \usepackage{tikz}
+
+* Tests à réaliser [0%]
+** Maillage [0%]
+** Boundary conditions
+*** Swirl inlet
+    inlet
+    {
+    type            swirlFlowRateInletVelocity;
+    flowRate     0.2;        // Volumetric/mass flow rate [m3/s or kg/s]
+    rpm             100;
+    value          uniform (0 0 0);
+    }
+
+*** Cylindrical coordinates
+    AIR_INLET
+    {
+    type cylindricalInletVelocity;
+    axis (0 1 0);
+    centre (0 0.114 0);
+    axialVelocity 2.202582536;
+    rpm 444.4074;
+    radialVelocity 0;
+    value uniform (0 0 0);
+    }
+
+- [ ] Conditions aux limites
+- [ ] Cyclic
+** Modèles [%]
+-[]
+-[]
+#* Tikz Sample
+  In figure \ref{fig:tikz_sample} you can see something.
+
+  #+srcname: tikz_sample
+  #+begin_src latex :exports (if (eq backend 'latex) "none" "results") :file tikz_sample.pdf :headers '("\\usepackage{tikz}")
+    \usetikzlibrary{arrows}
+    \tikzstyle{int}=[draw, fill=blue!20, minimum size=2em]
+    \tikzstyle{init} = [pin edge={to-,thin,black}]
+
+    \begin{tikzpicture}[node distance=2.5cm,auto,>=latex']
+        \node [int, pin={[init]above:$v_0$}] (a) {$\frac{1}{s}$};
+        \node (b) [left of=a,node distance=2cm, coordinate] {a};
+        \node [int, pin={[init]above:$p_0$}] (c) [right of=a] {$\frac{1}{s}$};
+        \node [coordinate] (end) [right of=c, node distance=2cm]{};
+        \path[->] (b) edge node {$a$} (a);
+        \path[->] (a) edge node {$v$} (c);
+        \draw[->] (c) edge node {$p$} (end) ;
+    \end{tikzpicture}
+   #+end_src
+
+   #+begin_src latex :noweb yes
+     \begin{figure}
+       \centering
+       <<tikz_sample>>
+       \caption[Tikz]{Tikz}\label{fig:tikz_sample}
+     \end{figure}
+   #+end_src
+
+#+BEGIN_SRC emacs-lisp -n -r
+  (save-excursion                  (ref:sc)
+     (goto-char (point-min))       (ref:jump)
+#+END_SRC
+
+#+begin_src python :results output
+  if (dede):
+      ddsd
+      ds
+  a = 2.0 / 1
+  print "hello"
+  5
+  print "bye"
+#+end_src
+
+#+resname:
+
+#+begin_src python :results output raw :exports results :file /tmp/plot_test.png
+import numpy, matplotlib, matplotlib.pyplot
+figure = matplotlib.pyplot.figure()
+axes = figure.add_subplot(111, title=u"Hello", xlabel="x", ylabel="y")
+x = numpy.arange(-10, 10, 0.1)
+axes.plot(x, x**2)
+figure.savefig("/tmp/plot_test.png")
+figure.clf()
+print "[[/tmp/plot_test.png]]"
+#+end_src

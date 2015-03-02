@@ -1,0 +1,1721 @@
+/*
+* Gmsh script to generate the swirling device mesh
+*
+* Filename: swirler.geo
+* Description: Generation of the swirling device geometry and mesh with Gmsh
+* This script is based on the previous work of Halldor PALSSON(2) and Sylvain LALOT(1).
+*
+*  Author(s): Francois BEAUBERT(1), Sylvain LALOT(1), Hadrien BAUDUIN(1)
+*
+* (1) TEMPO EA4542, University of Valenciennes, France
+* (2) Faculty of Industrial Engineering, Mechanical Engineering and Computer Science, University of Iceland
+
+* Created: 07/01/2011
+* By: Francois BEAUBERT
+* Version: 1.0 alpha-3
+* Changelog:
+* 21/01/20111 by Sylvain LALOT
+* 25/01/2011 by Francois BEAUBERT
+* 16/02/2011 by Sylvain LALOT
+* 05/05/2011 by Hadrien BAUDUIN
+* 10/06/2011 by Hadrien BAUDUIN
+*
+* Usage:
+* o use ./run.sh
+*/
+Geometry.AutoCoherence = 0;
+
+Geometry.Tolerance = 1e-8; //1e-6;
+
+Mesh.RecombinationAlgorithm = 0; //0: standard, 1: blossom
+
+/*
+* Geometric parameters
+*/
+pipeDiameter   = 0.036;
+centerDiameter = 0.005;
+entranceLength = 0.072;
+finLength      = 0.072;
+tailLength     = 0.010;
+mainPipeLength = 4.32; //4.32; //0.100; //for testing (vizualisation) purpose under gmsh or parafoam (do not forget to reduce also avalSwirlerLength)
+numberOfFins   = 4; // neither 2, nor 1 for this current script
+//HB
+Radius2           = (3/2) *centerDiameter;
+noseL2            = (1/1) *Radius2;
+tailL2            = (1/3) *Radius2;  
+avalSwirlerLength = ( 5 ) *pipeDiameter +finLength; 
+
+/*
+* Twisting parameters
+*/
+exitAngle  = 60;
+twistAngle = 150;
+exitLead   = 0.50;
+
+/*
+* spline coefficients
+*/
+gamma = 0.6;
+beta  = 1.2;
+
+twistAngle = twistAngle*Pi/180;
+exitAngle  = exitAngle*Pi/180;
+leadAngle  = exitLead*twistAngle;
+
+/*
+* Meshing parameters
+*/
+// !!!!!!!!!!!!!!!!! Check the implementation of the progression and the bump at lines=1340 "Meshing of the edges" !!!!!!!!
+// Not fully completed yet (10/06/2011)!!!
+// Progression or Bump
+radialProgression        = 0.95; // <=1 for the "radius" linked to the pipewall
+// ou :
+// radialBump = 0.05;
+radialCprogression       = 0.95; // <=1 for the "intermediate radius" linked to the pipewall
+radial2Progression       = 1.05; // >=1 for the "radius2" of slice without centerdiameter, before the swirler
+radial2Progression2      = 1.03; // >=1 for the "radius2" of slice WITH centerdiameter
+radial2Progression3      = radial2Progression; // >=1 for the "radius2" of slice without centerdiameter AFTER the swirler
+noseProgression          = 0.99; // <=1 for the horizontal lines above the nose
+noseProgression2         = 1.01; // >=1(??) for the top of the nose
+//noseProgressionC ??
+//noseProgression2C ??
+radial2noseProgression1  = 1.02; // >=1 for the front of the nose
+radial2noseProgression2  = 0.90; // <=1 for the link between the slice before nose and the "center-nose"
+radial2noseProgression2C = radial2noseProgression2; // for lc1c
+radial2noseProgression3  = 0.97; // <=1 for the horizontal centerline just before the nose
+//tailProgression          = 1; // <=1 for the horizontal lines above the tail
+//tailProgression2         = 1; // <=1 for the beginning of the tail
+//radial2tailProgression1  = 1; // <=1 for the end of the tail
+//radial2tailProgression2  = 1; // >=1 for the link between the "center-tail" and avalSwirler
+//radial2tailProgression2C = radial2tailProgression2; // for lc2c 
+radial2tailProgression3  = 1; // >=1 for the horizontal centerline just after the end of the tail
+avalSwirlerProgression   = 1; // >=1 (=1), part of the pipe just after the tail
+revolutionProgression    = 1.05; // >=1 revolution ext., before the swirler
+revolution2Progression   = 1.02; // >=1 revolution int., before the swirler
+revolutionProgression2   = 1.05; // >=1 revolution ext., AFTER the swirler
+revolution2Progression2  = 1.02; // >=1 revolution int., AFTER the swirler
+interProgression         = 1.05; // >=1 for the sides of the center-quadrangle before the swirler
+interProgression2        = 1.05; // >=1 for the sides of the center-quadrangle AFTER the swirler
+
+//HB
+cellsNoseLength     = 25;
+cellsAvalSwirler    = 150;
+
+cellsEntranceLength = 35; // Number of cells upstream of the swirling device
+entranceProgression = 0.95; // Stretching of the cells upstream the swirling device
+cellsRadial         = 25; // Number of cells in the radial direction
+cellsRadial2        = 30; // Number of cells in the radial direction
+//radialBump          = 0.05; // Stretching of the cells in the radial direction
+cellsTailLength     = 40; // Number of cells for the tail of the centerpiece
+cellsFinLength      = 100; // Number of cells for the fins length
+finBump             = 0.4; // Stretching of the cells at the beginning and end of the fins
+nbPointsSpline      = 60; // Number of points to describe the spline edges used for the fins
+cellsPipeLength     = 700; // Number of cells downstream of the swirling device
+pipeProgression     = 1.0020; // Stretching of the cells dowstream the swirling device
+
+//HB
+mshRefAngle = 105; // angle at the "top" of the reference quadrangle of slices  
+
+/*
+* Code
+*/
+
+/*
+* Information
+// naming strategy for the points:
+// p[number_of_the_slice_(1_is_the_for_the_entrance)]_[identification_number_of_radial_position(1,2or3)][option:b or c]
+// identification_number_of_radial_position = 1 at the centerpipe or at the centerdiameter/2 depending of the type of slice
+//                                          = 2 at radius = "radius2" 
+//                                          = 3 on the pipewall
+// [option:b or c] = b is for the "opposite points"
+//                 = c is for the "intermediate points"
+// pcc[number_of_the_slice] for "circle center"
+// (beware of pcc4 different from po4)
+// pt[1,2,3or4]: points that are not in a slice plan
+// naming strategy for the lines:
+// for horizontal lines:
+// lh[number_of_the_first_linked_slice_(1_is_the_for_the_entrance)]_[1,2or3 from centerpipe to pipe wall][option:b or c]
+// for vertical lines:
+// lv[number_of_the_slice_(1_is_the_for_the_entrance)]_[1,2 , 1 for segment length radius2, 2 for segment length radius][option:b or c]
+// for "intermediate" lines:
+// li[number_of_the_slice_(1_is_the_for_the_entrance)]_[number_of_the_starting_point][option:a or b]
+// [option:a or b] = a for intermediate lines linking master surface ( ) to intermediate surface (c)
+//                 = b for intermediate lines linking intermediate surface (c) to opposite surface (b)
+// lc[1or2][option:b or c]: lines linking point "pt" on the nose or tail of the centerpiece to the opposite slice
+// naming for "slice" surfaces:
+// slice[number_of_the_slice]_[1or2 from the center to the pipewall][option:a or b]
+*/
+
+// Points for the tube
+p1_1= newp; Point(p1_1) = {0, 0, -entranceLength};
+p2_1= newp; Point(p2_1) = {0, 0, -noseL2};
+pcc3= newp; Point(pcc3) = {0, 0, 0};
+pt1= newp; Point(pt1) = {0, 0, -centerDiameter/2};
+pt2= newp; Point(pt2) = {centerDiameter/2*Cos(-Pi/4), 0, centerDiameter/2*Sin(-Pi/4)}; //SL
+p3_1= newp; Point(p3_1) = {centerDiameter/2, 0, 0};
+p1_3= newp; Point(p1_3) = {pipeDiameter/2, 0, -entranceLength};
+p2_3= newp; Point(p2_3) = {pipeDiameter/2, 0, -noseL2};
+p3_3= newp; Point(p3_3) = {pipeDiameter/2, 0, 0};
+
+//Francois BEAUBERT
+p1_2 = newp; Point(p1_2) = {Radius2, 0, -entranceLength};
+p2_2 = newp; Point(p2_2) = {Radius2, 0, -noseL2};
+p3_2 = newp; Point(p3_2) = {Radius2, 0, 0};
+//
+
+m_p4_1=centerDiameter/2;
+p4_1= newp; Point(p4_1) = {m_p4_1*Cos(twistAngle), m_p4_1*Sin(twistAngle), finLength};
+
+//HB
+po4= newp; Point(po4) = {0, 0, finLength};
+
+// center point for tail curve
+m_pcc4=(tailLength^2 - (centerDiameter/2)^2)/centerDiameter;
+pcc4= newp; Point(pcc4) = {m_pcc4*Cos(twistAngle-Pi), m_pcc4*Sin(twistAngle-Pi), finLength};
+
+r_tail=m_pcc4+centerDiameter/2;
+phi_tail=Atan(tailLength/(m_pcc4));
+
+m_pt3=r_tail*Cos(phi_tail/2)-m_pcc4;
+////////////////////////////////////
+pt3= newp; Point(pt3) = {m_pt3*Cos(twistAngle), m_pt3*Sin(twistAngle), finLength + r_tail*Sin(phi_tail/2)}; //////
+
+pt4= newp; Point(pt4) = {0, 0, finLength + tailLength};
+p5_1= newp; Point(p5_1) = {0, 0, finLength + tailLength + tailL2}; 
+p7_1= newp; Point(p7_1) = {0, 0, finLength + tailLength + mainPipeLength};
+p4_3= newp; Point(p4_3) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), finLength};
+p5_3= newp; Point(p5_3) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), finLength + tailLength + tailL2}; 
+p7_3= newp; Point(p7_3) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), finLength + tailLength + mainPipeLength};
+
+//Francois BEAUBERT
+p4_2 = newp; Point(p4_2) = {(Radius2)*Cos(twistAngle), (Radius2)*Sin(twistAngle), finLength};
+p5_2 = newp; Point(p5_2) = {(Radius2)*Cos(twistAngle), (Radius2)*Sin(twistAngle), finLength + tailLength + tailL2};
+p7_2 = newp; Point(p7_2) = {(Radius2)*Cos(twistAngle), (Radius2)*Sin(twistAngle), finLength + tailLength + mainPipeLength};
+//
+
+//HB
+p6_1= newp; Point(p6_1) = {0, 0, avalSwirlerLength};
+p6_2 = newp; Point(p6_2) = {(Radius2)*Cos(twistAngle), (Radius2)*Sin(twistAngle), avalSwirlerLength};
+p6_3= newp; Point(p6_3) = {pipeDiameter/2*Cos(twistAngle), pipeDiameter/2*Sin(twistAngle), avalSwirlerLength};
+
+// Points of the splines for the Fins
+
+h = finLength;
+
+// 4 control points
+p1x_s1 = twistAngle* (centerDiameter/2);
+p1z_s1 = h;
+
+p2x_s1 = (twistAngle - leadAngle)* (centerDiameter/2);
+p2z_s1 = h - leadAngle * (centerDiameter/2) * Tan(exitAngle);
+
+r = (h - twistAngle * (centerDiameter/2) * Tan(exitAngle)) * beta;
+p3x_s1 = 0;
+p3z_s1 = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s1 = 0;
+p4z_s1 = 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s1[i] = (1-u)^3*p1x_s1+3*u*(1-u)^2*p2x_s1+3*u^2*(1-u)*p3x_s1+u^3*p4x_s1;
+pz_s1[i] = (1-u)^3*p1z_s1+3*u*(1-u)^2*p2z_s1+3*u^2*(1-u)*p3z_s1+u^3*p4z_s1;
+x_s1[i] = Cos(px_s1[i]/(centerDiameter/2))*(centerDiameter/2);
+y_s1[i] = Sin(px_s1[i]/(centerDiameter/2))*(centerDiameter/2);
+ps_s1= newp; Point(ps_s1) = {x_s1[i], y_s1[i], pz_s1[i]};
+EndFor
+
+//Francois BEAUBERT
+s1 = newl; Spline(s1) = {p3_1, ps_s1-nbPointsSpline+1:ps_s1, p4_1}; // Spline on centerpiece wall
+//
+
+//Francois BEAUBERT
+p1x_s2 = twistAngle* (Radius2);
+p1z_s2 = h;
+
+p2x_s2 = (twistAngle- leadAngle)* (Radius2);
+p2z_s2 = h - leadAngle * (Radius2) * Tan(exitAngle);
+
+r = (h - twistAngle * (Radius2) * Tan(exitAngle)) * beta;
+p3x_s2 = 0;
+p3z_s2 = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s2 = 0;
+p4z_s2 = 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s2[i] = (1-u)^3*p1x_s2+3*u*(1-u)^2*p2x_s2+3*u^2*(1-u)*p3x_s2+u^3*p4x_s2;
+pz_s2[i] = (1-u)^3*p1z_s2+3*u*(1-u)^2*p2z_s2+3*u^2*(1-u)*p3z_s2+u^3*p4z_s2;
+x_s2[i] = Cos(px_s2[i]/(Radius2))*(Radius2);
+y_s2[i] = Sin(px_s2[i]/(Radius2))*(Radius2);
+ps_s2= newp; Point(ps_s2) = {x_s2[i], y_s2[i], pz_s2[i]} ;
+EndFor
+
+s2 = newl; Spline(s2) = {p3_2, ps_s2-nbPointsSpline+1:ps_s2, p4_2}; // intermediate Spline
+//
+
+//
+p1x_s3 = twistAngle* (pipeDiameter/2);
+p1z_s3 = h;
+
+p2x_s3 = (twistAngle- leadAngle)* (pipeDiameter/2);
+p2z_s3 = h - leadAngle * (pipeDiameter/2) * Tan(exitAngle);
+
+r = (h - twistAngle * (pipeDiameter/2) * Tan(exitAngle)) * beta;
+p3x_s3 = 0;
+p3z_s3 = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s3 = 0;
+p4z_s3 = 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s3[i] = (1-u)^3*p1x_s3+3*u*(1-u)^2*p2x_s3+3*u^2*(1-u)*p3x_s3+u^3*p4x_s3;
+pz_s3[i] = (1-u)^3*p1z_s3+3*u*(1-u)^2*p2z_s3+3*u^2*(1-u)*p3z_s3+u^3*p4z_s3;
+x_s3[i] = Cos(2*px_s3[i]/pipeDiameter)*(pipeDiameter/2);
+y_s3[i] = Sin(2*px_s3[i]/pipeDiameter)*(pipeDiameter/2);
+ps_s3 = newp; Point(ps_s3) = {x_s3[i], y_s3[i], pz_s3[i]} ;
+EndFor
+
+s3 = newl; Spline(s3) = {p3_3, ps_s3-nbPointsSpline+1:ps_s3, p4_3}; // Spline on pipe wall
+
+// Lines
+lh1_1= newl; Line(lh1_1) = {p1_1, p2_1};
+lh1_3= newl; Line(lh1_3) = {p1_3, p2_3};
+//Francois BEAUBERT
+lv1_1= newl; Line(lv1_1) = {p1_1, p1_2};
+//Francois BEAUBERT
+lv2_1= newl; Line(lv2_1) = {p2_1, p2_2};
+//
+lh2_1= newl; Line(lh2_1) = {p2_1, pt1};
+//Francois BEAUBERT
+lc1= newl; Line(lc1) = {p2_2, pt2};
+//
+cnose1= newl; Circle(cnose1) = {pt1, pcc3, pt2};
+cnose2= newl; Circle(cnose2) = {pt2, pcc3, p3_1};
+//Francois BEAUBERT
+lv3_1= newl; Line(lv3_1) = {p3_1, p3_2};
+//
+lh2_3= newl; Line(lh2_3) = {p2_3, p3_3};
+//Francois BEAUBERT
+lv4_1= newl; Line(lv4_1) = {p4_1, p4_2};
+//
+ctail1= newl; Circle(ctail1) = {p4_1, pcc4, pt3};
+lh4_3= newl; Line(lh4_3) = {p4_3, p5_3};
+//Francois BEAUBERT
+lc2= newl; Line(lc2) = {pt3, p5_2};
+//
+ctail2= newl; Circle(ctail2) = {pt3, pcc4, pt4};
+//
+lh4_1= newl; Line(lh4_1) = {pt4, p5_1};
+//Francois BEAUBERT
+lv5_1= newl; Line(lv5_1) = {p5_1, p5_2};
+//
+lh5_1= newl; Line(lh5_1) = {p5_1, p6_1};
+lh5_3= newl; Line(lh5_3) = {p5_3, p6_3};
+//Francois BEAUBERT
+lv6_1= newl; Line(lv6_1) = {p6_1, p6_2};
+//
+
+//Francois BEAUBERT
+lv1_2= newl; Line(lv1_2) = {p1_2, p1_3};
+lh2_2= newl; Line(lh2_2) = {p2_2, p3_2};
+lv2_2= newl; Line(lv2_2) = {p2_2, p2_3};
+lv3_2= newl; Line(lv3_2) = {p3_2, p3_3};
+lh1_2= newl; Line(lh1_2) = {p1_2, p2_2};
+
+lh4_2= newl; Line(lh4_2) = {p4_2, p5_2};
+lv4_2= newl; Line(lv4_2) = {p4_2, p4_3};
+lv5_2= newl; Line(lv5_2) = {p5_2, p5_3};
+lv6_2= newl; Line(lv6_2) = {p6_2, p6_3};
+lh5_2= newl; Line(lh5_2) = {p5_2, p6_2};
+
+//HB
+lh6_1= newl; Line(lh6_1) = {p6_1, p7_1};
+lh6_2= newl; Line(lh6_2) = {p6_2, p7_2};
+lh6_3= newl; Line(lh6_3) = {p6_3, p7_3};
+lv7_1= newl; Line(lv7_1) = {p7_1, p7_2};
+lv7_2= newl; Line(lv7_2) = {p7_2, p7_3};
+
+//
+// Surfaces
+// amont = upstream
+Amont1 = newll;
+Amont1 = news;
+Line Loop(Amont1) = {lh1_1, lv2_1, -lh1_2, -lv1_1};
+Plane Surface(Amont1) = {Amont1};
+
+Amont2 = newll;
+Amont2 = news;
+Line Loop(Amont2) = {lh1_2, lv2_2, -lh1_3, -lv1_2};
+Plane Surface(Amont2) = {Amont2};
+
+Amont3 = newll;
+Amont3 = news;
+Line Loop(Amont3) = {lh2_1, cnose1, -lc1, -lv2_1};
+Plane Surface(Amont3) = {Amont3};
+
+Amont4 = newll;
+Amont4 = news;
+Line Loop(Amont4) = {cnose2, lv3_1, -lh2_2, lc1};
+Plane Surface(Amont4) = {Amont4};
+
+Amont5 = newll;
+Amont5 = news;
+Line Loop(Amont5) = {lh2_2, lv3_2, -lh2_3, -lv2_2};
+Plane Surface(Amont5) = {Amont5};
+
+// 1st fin
+Fin1 = newll;
+Fin1 = news;
+Line Loop(Fin1) = {s1, lv4_1, -s2, -lv3_1};
+Ruled Surface(Fin1) = {Fin1};
+
+Fin2 = newll;
+Fin2 = news;
+Line Loop(Fin2) = {s2, lv4_2, -s3, -lv3_2};
+Ruled Surface(Fin2) = {Fin2};
+
+// aval = downstream
+Aval1 = newll;
+Aval1 = news;
+Line Loop(Aval1) = {ctail1, lc2, -lh4_2, -lv4_1};
+Plane Surface(Aval1) = {Aval1};
+
+Aval2 = newll;
+Aval2 = news;
+Line Loop(Aval2) = {ctail2, lh4_1, lv5_1, -lc2};
+Plane Surface(Aval2) = {Aval2};
+
+Aval3 = newll;
+Aval3 = news;
+Line Loop(Aval3) = {lh4_2, lv5_2, -lh4_3, -lv4_2};
+Plane Surface(Aval3) = {Aval3};
+
+Aval4 = newll;
+Aval4 = news;
+Line Loop(Aval4) = {lh5_1, lv6_1, -lh5_2, -lv5_1};
+Plane Surface(Aval4) = {Aval4};
+
+Aval5 = newll;
+Aval5 = news;
+Line Loop(Aval5) = {lh5_2, lv6_2, -lh5_3, -lv5_2};
+Plane Surface(Aval5) = {Aval5};
+
+//HB
+Aval6 = newll;
+Aval6 = news;
+Line Loop(Aval6) = {lh6_1, lv7_1, -lh6_2, -lv6_1};
+Plane Surface(Aval6) = {Aval6};
+
+Aval7 = newll;
+Aval7 = news;
+Line Loop(Aval7) = {lh6_2, lv7_2, -lh6_3, -lv6_2};
+Plane Surface(Aval7) = {Aval7};
+
+//HB
+/*****
+* Geom_Revolution
+******/
+
+/*POINTS:*/
+
+// Points for the 1st reference surface:
+coord2[] = Point{p1_2}; 
+coord3[] = Point{p1_3};
+p1_2b= newp; Point(p1_2b) = {coord2[0]*Cos(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p1_2b};
+p1_3b= newp; Point(p1_3b) = {coord3[0]*Cos(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins), coord3[2]};
+
+//p1_2c= newp; Point(p1_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+mp1_2c[] = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+coor1[]= Point{p1_2};
+coor2[]= Point{p1_2b};
+coor3[]= mp1_2c[];
+oppSide= (1/2)*( (coor1[0]-coor2[0])^2 + (coor1[1]-coor2[1])^2 )^(1/2);
+hypSide= ( (coor1[0]-coor3[0])^2 + (coor1[1]-coor3[1])^2 )^(1/2);
+mshAngle= Asin(oppSide/hypSide);
+mshAngle= 2*mshAngle*180/Pi;
+If ( mshAngle < mshRefAngle )
+	sgn = -1;
+EndIf
+If ( mshAngle >= mshRefAngle )
+	sgn = +1;
+EndIf
+kmax= 10000;
+For k In {1:kmax}
+	If ( !( mshAngle<=1.01*mshRefAngle && mshAngle>=0.99*mshRefAngle ) )
+		mp1_2c[] = { (1+(1/2)*sgn*(k-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(k-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+		coor3[]= mp1_2c[];		
+		hypSide= ( (coor1[0]-coor3[0])^2 + (coor1[1]-coor3[1])^2 )^(1/2);
+		mshAngle= Asin(oppSide/hypSide);
+		mshAngle= 2*mshAngle*180/Pi;
+	EndIf
+	If ( mshAngle<=1.01*mshRefAngle && mshAngle>=0.99*mshRefAngle )
+		kmsh= k;		
+		k= kmax;
+	EndIf
+EndFor
+p1_2c= newp; Point(p1_2c) = {mp1_2c[0], mp1_2c[1], mp1_2c[2]};
+
+p1_3c= newp; Point(p1_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2), coord3[2]};
+
+// Points for the 2nd reference surface:
+coord2[] = Point{p2_2};
+coord3[] = Point{p2_3};
+p2_2b= newp; Point(p2_2b) = {coord2[0]*Cos(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p2_2b};
+p2_3b= newp; Point(p2_3b) = {coord3[0]*Cos(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins), coord3[2]};
+
+//p2_2c= newp; Point(p2_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+mp2_2c[] = { (1+(1/2)*sgn*(kmsh-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(kmsh-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+p2_2c= newp; Point(p2_2c) = {mp2_2c[0], mp2_2c[1], mp2_2c[2]};
+
+p2_3c= newp; Point(p2_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2), coord3[2]};
+
+// Points for the 5th reference surface:
+coord2[] = Point{p5_2};
+coord3[] = Point{p5_3};
+p5_2b= newp; Point(p5_2b) = {coord2[0]*Cos(2*Pi/numberOfFins) - coord2[1]*Sin(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins) + coord2[1]*Cos(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p5_2b};
+p5_3b= newp; Point(p5_3b) = {coord3[0]*Cos(2*Pi/numberOfFins) - coord3[1]*Sin(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins) + coord3[1]*Cos(2*Pi/numberOfFins), coord3[2]};
+
+//p5_2c= newp; Point(p5_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+mp5_2c[] = { (1+(1/2)*sgn*(kmsh-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(kmsh-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+p5_2c= newp; Point(p5_2c) = {mp5_2c[0], mp5_2c[1], mp5_2c[2]};
+
+p5_3c= newp; Point(p5_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2) - coord3[1]*Sin(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2) + coord3[1]*Cos(2*Pi/numberOfFins/2), coord3[2]};
+
+// Points for the 6th reference surface:
+coord2[] = Point{p6_2};
+coord3[] = Point{p6_3};
+p6_2b= newp; Point(p6_2b) = {coord2[0]*Cos(2*Pi/numberOfFins) - coord2[1]*Sin(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins) + coord2[1]*Cos(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p6_2b};
+p6_3b= newp; Point(p6_3b) = {coord3[0]*Cos(2*Pi/numberOfFins) - coord3[1]*Sin(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins) + coord3[1]*Cos(2*Pi/numberOfFins), coord3[2]};
+
+//p6_2c= newp; Point(p6_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+mp6_2c[] = { (1+(1/2)*sgn*(kmsh-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(kmsh-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+p6_2c= newp; Point(p6_2c) = {mp6_2c[0], mp6_2c[1], mp6_2c[2]};
+
+p6_3c= newp; Point(p6_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2) - coord3[1]*Sin(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2) + coord3[1]*Cos(2*Pi/numberOfFins/2), coord3[2]};
+
+//HB
+// Points for the 7th reference surface:
+coord2[] = Point{p7_2};
+coord3[] = Point{p7_3};
+p7_2b= newp; Point(p7_2b) = {coord2[0]*Cos(2*Pi/numberOfFins) - coord2[1]*Sin(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins) + coord2[1]*Cos(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p7_2b};
+p7_3b= newp; Point(p7_3b) = {coord3[0]*Cos(2*Pi/numberOfFins) - coord3[1]*Sin(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins) + coord3[1]*Cos(2*Pi/numberOfFins), coord3[2]};
+
+//p7_2c= newp; Point(p7_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+mp7_2c[] = { (1+(1/2)*sgn*(kmsh-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(kmsh-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+p7_2c= newp; Point(p7_2c) = {mp7_2c[0], mp7_2c[1], mp7_2c[2]};
+
+p7_3c= newp; Point(p7_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2) - coord3[1]*Sin(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2) + coord3[1]*Cos(2*Pi/numberOfFins/2), coord3[2]};
+
+// Points for the 3rd reference surface: (centerDiameter)
+coord1[] = Point{p3_1};
+coord2[] = Point{p3_2};
+coord3[] = Point{p3_3};
+p3_1b= newp; Point(p3_1b) = {coord1[0]*Cos(2*Pi/numberOfFins), coord1[0]*Sin(2*Pi/numberOfFins), coord1[2]};
+p3_2b= newp; Point(p3_2b) = {coord2[0]*Cos(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p3_2b};
+p3_3b= newp; Point(p3_3b) = {coord3[0]*Cos(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins), coord3[2]};
+
+//p3_2c= newp; Point(p3_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]}
+mp3_2c[] = { (1+(1/2)*sgn*(kmsh-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(kmsh-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+p3_2c= newp; Point(p3_2c) = {mp3_2c[0], mp3_2c[1], mp3_2c[2]};
+
+p3_3c= newp; Point(p3_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2), coord3[2]};
+p3_1c= newp; Point(p3_1c) = {coord1[0]*Cos(2*Pi/numberOfFins/2), coord1[0]*Sin(2*Pi/numberOfFins/2), coord1[2]};
+
+// Points for the 4th reference surface: (centerDiameter)
+coord1[] = Point{p4_1};
+coord2[] = Point{p4_2};
+coord3[] = Point{p4_3};
+p4_1b= newp; Point(p4_1b) = {coord1[0]*Cos(2*Pi/numberOfFins) - coord1[1]*Sin(2*Pi/numberOfFins), coord1[0]*Sin(2*Pi/numberOfFins) + coord1[1]*Cos(2*Pi/numberOfFins), coord1[2]};
+p4_2b= newp; Point(p4_2b) = {coord2[0]*Cos(2*Pi/numberOfFins) - coord2[1]*Sin(2*Pi/numberOfFins), coord2[0]*Sin(2*Pi/numberOfFins) + coord2[1]*Cos(2*Pi/numberOfFins), coord2[2]};
+vec[] = Point{p4_2b};
+p4_3b= newp; Point(p4_3b) = {coord3[0]*Cos(2*Pi/numberOfFins) - coord3[1]*Sin(2*Pi/numberOfFins), coord3[0]*Sin(2*Pi/numberOfFins) + coord3[1]*Cos(2*Pi/numberOfFins), coord3[2]};
+
+//p4_2c= newp; Point(p4_2c) = {coord2[0]+vec[0], coord2[1]+vec[1], coord2[2]};
+mp4_2c[] = { (1+(1/2)*sgn*(kmsh-1)/kmax) *(coord2[0]+vec[0]), (1+(1/2)*sgn*(kmsh-1)/kmax)  *(coord2[1]+vec[1]), coord2[2]};
+p4_2c= newp; Point(p4_2c) = {mp4_2c[0], mp4_2c[1], mp4_2c[2]};
+
+p4_3c= newp; Point(p4_3c) = {coord3[0]*Cos(2*Pi/numberOfFins/2) - coord3[1]*Sin(2*Pi/numberOfFins/2), coord3[0]*Sin(2*Pi/numberOfFins/2) + coord3[1]*Cos(2*Pi/numberOfFins/2), coord3[2]};
+p4_1c= newp; Point(p4_1c) = {coord1[0]*Cos(2*Pi/numberOfFins/2) - coord1[1]*Sin(2*Pi/numberOfFins/2), coord1[0]*Sin(2*Pi/numberOfFins/2) + coord1[1]*Cos(2*Pi/numberOfFins/2), coord1[2]};
+
+/*LINES:*/
+
+// Lines for the 1st reference surface:
+lv1_1b= newl; Line(lv1_1b) = {p1_1, p1_2b};
+lv1_2b= newl; Line(lv1_2b) = {p1_2b, p1_3b};
+lv1_2c= newl; Line(lv1_2c) = {p1_2c, p1_3c};
+li1_2a= newl; Line(li1_2a) = {p1_2, p1_2c};
+li1_2b= newl; Line(li1_2b) = {p1_2c, p1_2b};
+li1_3a= newl; Circle(li1_3a) = {p1_3, p1_1, p1_3c};
+li1_3b= newl; Circle(li1_3b) = {p1_3c, p1_1, p1_3b};
+
+// Lines for the 2nd reference surface:
+lv2_1b= newl; Line(lv2_1b) = {p2_1, p2_2b};
+lv2_2b= newl; Line(lv2_2b) = {p2_2b, p2_3b};
+lv2_2c= newl; Line(lv2_2c) = {p2_2c, p2_3c};
+li2_2a= newl; Line(li2_2a) = {p2_2, p2_2c};
+li2_2b= newl; Line(li2_2b) = {p2_2c, p2_2b};
+li2_3a= newl; Circle(li2_3a) = {p2_3, p2_1, p2_3c};
+li2_3b= newl; Circle(li2_3b) = {p2_3c, p2_1, p2_3b};
+
+// Lines for the 5th reference surface:
+lv5_1b= newl; Line(lv5_1b) = {p5_1, p5_2b};
+lv5_2b= newl; Line(lv5_2b) = {p5_2b, p5_3b};
+lv5_2c= newl; Line(lv5_2c) = {p5_2c, p5_3c};
+li5_2a= newl; Line(li5_2a) = {p5_2, p5_2c};
+li5_2b= newl; Line(li5_2b) = {p5_2c, p5_2b};
+li5_3a= newl; Circle(li5_3a) = {p5_3, p5_1, p5_3c};
+li5_3b= newl; Circle(li5_3b) = {p5_3c, p5_1, p5_3b};
+
+// Lines for the 6th reference surface:
+lv6_1b= newl; Line(lv6_1b) = {p6_1, p6_2b};
+lv6_2b= newl; Line(lv6_2b) = {p6_2b, p6_3b};
+lv6_2c= newl; Line(lv6_2c) = {p6_2c, p6_3c};
+li6_2a= newl; Line(li6_2a) = {p6_2, p6_2c};
+li6_2b= newl; Line(li6_2b) = {p6_2c, p6_2b};
+li6_3a= newl; Circle(li6_3a) = {p6_3, p6_1, p6_3c};
+li6_3b= newl; Circle(li6_3b) = {p6_3c, p6_1, p6_3b};
+
+//HB
+// Lines for the 7th reference surface:
+lv7_1b= newl; Line(lv7_1b) = {p7_1, p7_2b};
+lv7_2b= newl; Line(lv7_2b) = {p7_2b, p7_3b};
+lv7_2c= newl; Line(lv7_2c) = {p7_2c, p7_3c};
+li7_2a= newl; Line(li7_2a) = {p7_2, p7_2c};
+li7_2b= newl; Line(li7_2b) = {p7_2c, p7_2b};
+li7_3a= newl; Circle(li7_3a) = {p7_3, p7_1, p7_3c};
+li7_3b= newl; Circle(li7_3b) = {p7_3c, p7_1, p7_3b};
+
+// Lines for the 3rd reference surface: (centerDiameter)
+lv3_1b= newl; Line(lv3_1b) = {p3_1b, p3_2b};
+lv3_2b= newl; Line(lv3_2b) = {p3_2b, p3_3b};
+lv3_1c= newl; Line(lv3_1c) = {p3_1c, p3_2c};
+lv3_2c= newl; Line(lv3_2c) = {p3_2c, p3_3c};
+li3_1a= newl; Circle(li3_1a) = {p3_1, pcc3, p3_1c};
+li3_1b= newl; Circle(li3_1b) = {p3_1c, pcc3, p3_1b};
+li3_2a= newl; Line(li3_2a) = {p3_2, p3_2c};
+li3_2b= newl; Line(li3_2b) = {p3_2c, p3_2b};
+li3_3a= newl; Circle(li3_3a) = {p3_3, pcc3, p3_3c};
+li3_3b= newl; Circle(li3_3b) = {p3_3c, pcc3, p3_3b};
+
+// Lines for the 4th reference surface: (centerDiameter)
+lv4_1b= newl; Line(lv4_1b) = {p4_1b, p4_2b};
+lv4_2b= newl; Line(lv4_2b) = {p4_2b, p4_3b};
+lv4_1c= newl; Line(lv4_1c) = {p4_1c, p4_2c};
+lv4_2c= newl; Line(lv4_2c) = {p4_2c, p4_3c};
+li4_1a= newl; Circle(li4_1a) = {p4_1, po4, p4_1c};
+li4_1b= newl; Circle(li4_1b) = {p4_1c, po4, p4_1b};
+li4_2a= newl; Line(li4_2a) = {p4_2, p4_2c};
+li4_2b= newl; Line(li4_2b) = {p4_2c, p4_2b};
+li4_3a= newl; Circle(li4_3a) = {p4_3, po4, p4_3c}; //
+li4_3b= newl; Circle(li4_3b) = {p4_3c, po4, p4_3b}; //
+
+/*FACES:*/
+
+// 1st reference surface:
+slice1_1 = newll;
+slice1_1 = news;
+Line Loop(slice1_1) = {lv1_1, li1_2a, li1_2b, -lv1_1b};
+Plane Surface(slice1_1) = {slice1_1};
+
+slice1_2a = newll;
+slice1_2a = news;
+Line Loop(slice1_2a) = {lv1_2, li1_3a, -lv1_2c, -li1_2a};
+Plane Surface(slice1_2a) = {slice1_2a};
+
+slice1_2b = newll;
+slice1_2b = news;
+Line Loop(slice1_2b) = {lv1_2c, li1_3b, -lv1_2b, -li1_2b};
+Plane Surface(slice1_2b) = {slice1_2b};
+
+// 2nd reference surface::
+slice2_1 = newll;
+slice2_1 = news;
+Line Loop(slice2_1) = {lv2_1, li2_2a, li2_2b, -lv2_1b};
+Plane Surface(slice2_1) = {slice2_1};
+
+slice2_2a = newll;
+slice2_2a = news;
+Line Loop(slice2_2a) = {lv2_2, li2_3a, -lv2_2c, -li2_2a};
+Plane Surface(slice2_2a) = {slice2_2a};
+
+slice2_2b = newll;
+slice2_2b = news;
+Line Loop(slice2_2b) = {lv2_2c, li2_3b, -lv2_2b, -li2_2b};
+Plane Surface(slice2_2b) = {slice2_2b};
+
+// 5th reference surface:
+slice5_1 = newll;
+slice5_1 = news;
+Line Loop(slice5_1) = {lv5_1, li5_2a, li5_2b, -lv5_1b};
+Plane Surface(slice5_1) = {slice5_1};
+
+slice5_2a = newll;
+slice5_2a = news;
+Line Loop(slice5_2a) = {lv5_2, li5_3a, -lv5_2c, -li5_2a};
+Plane Surface(slice5_2a) = {slice5_2a};
+
+slice5_2b = newll;
+slice5_2b = news;
+Line Loop(slice5_2b) = {lv5_2c, li5_3b, -lv5_2b, -li5_2b};
+Plane Surface(slice5_2b) = {slice5_2b};
+
+// 6th reference surface: 
+slice6_1 = newll;
+slice6_1 = news;
+Line Loop(slice6_1) = {lv6_1, li6_2a, li6_2b, -lv6_1b};
+Plane Surface(slice6_1) = {slice6_1};
+
+slice6_2a = newll;
+slice6_2a = news;
+Line Loop(slice6_2a) = {lv6_2, li6_3a, -lv6_2c, -li6_2a};
+Plane Surface(slice6_2a) = {slice6_2a};
+
+slice6_2b = newll;
+slice6_2b = news;
+Line Loop(slice6_2b) = {lv6_2c, li6_3b, -lv6_2b, -li6_2b};
+Plane Surface(slice6_2b) = {slice6_2b};
+
+//HB
+// 7th reference surface: 
+slice7_1 = newll;
+slice7_1 = news;
+Line Loop(slice7_1) = {lv7_1, li7_2a, li7_2b, -lv7_1b};
+Plane Surface(slice7_1) = {slice7_1};
+
+slice7_2a = newll;
+slice7_2a = news;
+Line Loop(slice7_2a) = {lv7_2, li7_3a, -lv7_2c, -li7_2a};
+Plane Surface(slice7_2a) = {slice7_2a};
+
+slice7_2b = newll;
+slice7_2b = news;
+Line Loop(slice7_2b) = {lv7_2c, li7_3b, -lv7_2b, -li7_2b};
+Plane Surface(slice7_2b) = {slice7_2b};
+
+// 3rd reference surface: (centerDiameter)
+slice3_1a = newll;
+slice3_1a = news;
+Line Loop(slice3_1a) = {lv3_1, li3_2a, -lv3_1c, -li3_1a};
+Plane Surface(slice3_1a) = {slice3_1a};
+
+slice3_1b = newll;
+slice3_1b = news;
+Line Loop(slice3_1b) = {lv3_1c, li3_2b, -lv3_1b, -li3_1b};
+Plane Surface(slice3_1b) = {slice3_1b};
+
+slice3_2a = newll;
+slice3_2a = news;
+Line Loop(slice3_2a) = {lv3_2, li3_3a, -lv3_2c, -li3_2a};
+Plane Surface(slice3_2a) = {slice3_2a};
+
+slice3_2b = newll;
+slice3_2b = news;
+Line Loop(slice3_2b) = {lv3_2c, li3_3b, -lv3_2b, -li3_2b};
+Plane Surface(slice3_2b) = {slice3_2b};
+
+// 4th reference surface: (centerDiameter)
+slice4_1a = newll;
+slice4_1a = news;
+Line Loop(slice4_1a) = {lv4_1, li4_2a, -lv4_1c, -li4_1a};
+Plane Surface(slice4_1a) = {slice4_1a};
+
+slice4_1b = newll;
+slice4_1b = news;
+Line Loop(slice4_1b) = {lv4_1c, li4_2b, -lv4_1b, -li4_1b};
+Plane Surface(slice4_1b) = {slice4_1b};
+
+slice4_2a = newll;
+slice4_2a = news;
+Line Loop(slice4_2a) = {lv4_2, li4_3a, -lv4_2c, -li4_2a};
+Plane Surface(slice4_2a) = {slice4_2a};
+
+slice4_2b = newll;
+slice4_2b = news;
+Line Loop(slice4_2b) = {lv4_2c, li4_3b, -lv4_2b, -li4_2b};
+Plane Surface(slice4_2b) = {slice4_2b};
+
+//
+// Splines for the 2nd fin:
+For i In {1:nbPointsSpline}
+pz_s1b[i] = pz_s1[i];
+x_s1b[i] = x_s1[i]*Cos(2*Pi/numberOfFins) - y_s1[i]*Sin(2*Pi/numberOfFins);
+y_s1b[i] = x_s1[i]*Sin(2*Pi/numberOfFins) + y_s1[i]*Cos(2*Pi/numberOfFins);
+ps_s1b= newp; Point(ps_s1b) = {x_s1b[i], y_s1b[i], pz_s1b[i]} ;
+EndFor
+
+//
+For i In {1:nbPointsSpline}
+pz_s2b[i] = pz_s2[i];
+x_s2b[i] = x_s2[i]*Cos(2*Pi/numberOfFins) - y_s2[i]*Sin(2*Pi/numberOfFins);
+y_s2b[i] = x_s2[i]*Sin(2*Pi/numberOfFins) + y_s2[i]*Cos(2*Pi/numberOfFins);
+ps_s2b= newp; Point(ps_s2b) = {x_s2b[i], y_s2b[i], pz_s2b[i]} ;
+EndFor
+
+//
+For i In {1:nbPointsSpline}
+pz_s3b[i] = pz_s3[i];
+x_s3b[i] = x_s3[i]*Cos(2*Pi/numberOfFins) - y_s3[i]*Sin(2*Pi/numberOfFins);
+y_s3b[i] = x_s3[i]*Sin(2*Pi/numberOfFins) + y_s3[i]*Cos(2*Pi/numberOfFins);
+ps_s3b= newp; Point(ps_s3b) = {x_s3b[i], y_s3b[i], pz_s3b[i]} ;
+EndFor
+
+s1b = newl; Spline(s1b) = {p3_1b, ps_s1b-nbPointsSpline+1:ps_s1b, p4_1b}; // Spline on centerpiece wall
+
+s2b = newl; Spline(s2b) = {p3_2b, ps_s2b-nbPointsSpline+1:ps_s2b, p4_2b}; // intermediate Spline
+
+s3b = newl; Spline(s3b) = {p3_3b, ps_s3b-nbPointsSpline+1:ps_s3b, p4_3b}; // Spline on pipe wall
+
+lh1_2b= newl; Line(lh1_2b) = {p1_2b, p2_2b};
+lh1_3b= newl; Line(lh1_3b) = {p1_3b, p2_3b};
+lh2_2b= newl; Line(lh2_2b) = {p2_2b, p3_2b};
+lh2_3b= newl; Line(lh2_3b) = {p2_3b, p3_3b};
+lh4_2b= newl; Line(lh4_2b) = {p4_2b, p5_2b};
+lh4_3b= newl; Line(lh4_3b) = {p4_3b, p5_3b};
+lh5_2b= newl; Line(lh5_2b) = {p5_2b, p6_2b};
+lh5_3b= newl; Line(lh5_3b) = {p5_3b, p6_3b};
+lh6_2b= newl; Line(lh6_2b) = {p6_2b, p7_2b};
+lh6_3b= newl; Line(lh6_3b) = {p6_3b, p7_3b};
+
+lh1_2c= newl; Line(lh1_2c) = {p1_2c, p2_2c};
+lh1_3c= newl; Line(lh1_3c) = {p1_3c, p2_3c};
+lh2_2c= newl; Line(lh2_2c) = {p2_2c, p3_2c};
+lh2_3c= newl; Line(lh2_3c) = {p2_3c, p3_3c};
+lh4_2c= newl; Line(lh4_2c) = {p4_2c, p5_2c};
+lh4_3c= newl; Line(lh4_3c) = {p4_3c, p5_3c};
+lh5_2c= newl; Line(lh5_2c) = {p5_2c, p6_2c};
+lh5_3c= newl; Line(lh5_3c) = {p5_3c, p6_3c};
+lh6_2c= newl; Line(lh6_2c) = {p6_2c, p7_2c};
+lh6_3c= newl; Line(lh6_3c) = {p6_3c, p7_3c};
+
+coord[] = Point{pt2};
+pt2b=newp; Point(pt2b) = {coord[0]*Cos(2*Pi/numberOfFins), coord[0]*Sin(2*Pi/numberOfFins), coord[2]};
+cnose1b= newl; Circle(cnose1b) = {pt1 ,pcc3, pt2b};
+cnose2b= newl; Circle(cnose2b) = {pt2b, pcc3, p3_1b};
+lc1b= newl; Line(lc1b) = {p2_2b, pt2b};
+
+coord[] = Point{pt3};
+pt3b=newp; Point(pt3b) = {coord[0]*Cos(2*Pi/numberOfFins) - coord[1]*Sin(2*Pi/numberOfFins), coord[0]*Sin(2*Pi/numberOfFins) + coord[1]*Cos(2*Pi/numberOfFins), coord[2]};
+
+coord[] = Point{pcc4};
+pcc4b=newp; Point(pcc4b) = {coord[0]*Cos(2*Pi/numberOfFins) - coord[1]*Sin(2*Pi/numberOfFins), coord[0]*Sin(2*Pi/numberOfFins) + coord[1]*Cos(2*Pi/numberOfFins), coord[2]};
+ctail1b= newl; Circle(ctail1b) = {p4_1b, pcc4b, pt3b};
+ctail2b= newl; Circle(ctail2b) = {pt3b, pcc4b, pt4};
+lc2b= newl; Line(lc2b) = {pt3b, p5_2b};
+
+/*
+coord1[] = Point{pt2};
+coord2[] = Point{pt2b};
+pt2cx= coord1[0]+coord2[0];
+pt2cy= coord1[1]+coord2[1];
+pt2cz= coord1[2]+coord2[2];
+*/
+
+pt2d= newp; Point(pt2d) = {centerDiameter/2*Cos(-Pi/8), 0, centerDiameter/2*Sin(-Pi/8)};
+coord1[] = Point{pt2d};
+pt2e=newp; Point(pt2e) = {coord1[0]*Cos(2*Pi/numberOfFins), coord1[0]*Sin(2*Pi/numberOfFins), coord1[2]};
+coord2[] = Point{pt2e};
+pt2cx= coord1[0]+coord2[0];
+pt2cy= coord1[1]+coord2[1];
+pt2cz= coord1[2]+coord2[2];
+
+rTmp= (pt2cx^2+pt2cy^2+pt2cz^2)^(1/2);
+pt2cx= pt2cx*(centerDiameter/2)/rTmp;
+pt2cy= pt2cy*(centerDiameter/2)/rTmp;
+pt2cz= pt2cz*(centerDiameter/2)/rTmp;
+pt2c=newp; Point(pt2c) = {pt2cx, pt2cy, pt2cz};
+cpt2a= newl; Circle(cpt2a) = {pt2, pcc3, pt2c};
+cpt2b= newl; Circle(cpt2b) = {pt2c, pcc3, pt2b};
+lc1c= newl; Line(lc1c) = {p2_2c, pt2c};
+
+/*
+coord[] = Point{pt3};
+pt3c=newp; Point(pt3c) = {coord[0]*Cos(2*Pi/numberOfFins/2) - coord[1]*Sin(2*Pi/numberOfFins/2), coord[0]*Sin(2*Pi/numberOfFins/2) + coord[1]*Cos(2*Pi/numberOfFins/2), coord[2]};
+*/
+
+/*
+coord[] = Point{pt3};
+pt3cc=newp; Point(pt3cc) = {0, 0, coord[2]};
+cpt3a=newl; Circle(cpt3a) = {pt3, pt3cc, pt3c}; 
+cpt3b=newl; Circle(cpt3b) = {pt3c, pt3cc, pt3b}; 
+*/
+
+coord0[]= Point{pcc4};
+coord1[]= Point{pt3};
+coord2[]= Point{p4_1};
+For k In {0:2}
+vec1[k]= coord1[k]-coord0[k];
+vec2[k]= coord2[k]-coord0[k];
+EndFor
+rTail= (vec1[0]^2+vec1[1]^2+vec1[2]^2)^(1/2);
+////////////////////////
+pt3Cx= (1) *vec1[0]+ (1/2) *vec2[0];
+pt3Cy= (1) *vec1[1]+ (1/2) *vec2[1];
+pt3Cz= (1) *vec1[2]+ (1/2) *vec2[2];
+
+rTmp= (pt3Cx^2+pt3Cy^2+pt3Cz^2)^(1/2);
+pt3Cx= coord0[0]+pt3Cx*rTail/rTmp;
+pt3Cy= coord0[1]+pt3Cy*rTail/rTmp;
+pt3Cz= coord0[2]+pt3Cz*rTail/rTmp;
+//pt3C= newp; Point(pt3C) = {pt3Cx, pt3Cy, pt3Cz};
+////////////////////////
+pt3c= newp; Point(pt3c) = {pt3Cx*Cos(2*Pi/numberOfFins/2) - pt3Cy*Sin(2*Pi/numberOfFins/2), pt3Cx*Sin(2*Pi/numberOfFins/2) + pt3Cy*Cos(2*Pi/numberOfFins/2), pt3Cz};
+lc2c= newl; Line(lc2c) = {pt3c, p5_2c};
+
+//ktail=100;
+ktail=5;
+For k In {1:ktail}
+////////////////////////
+pt3Cx= (1) *vec1[0]+ (1/2) *k/(ktail+1)*vec2[0];
+pt3Cy= (1) *vec1[1]+ (1/2) *k/(ktail+1)*vec2[1];
+pt3Cz= (1) *vec1[2]+ (1/2) *k/(ktail+1)*vec2[2];
+
+rTmp= (pt3Cx^2+pt3Cy^2+pt3Cz^2)^(1/2);
+pt3Cx= coord0[0]+pt3Cx*rTail/rTmp;
+pt3Cy= coord0[1]+pt3Cy*rTail/rTmp;
+pt3Cz= coord0[2]+pt3Cz*rTail/rTmp;
+//pt3C= newp; Point(pt3C) = {pt3Cx, pt3Cy, pt3Cz};
+pt3cc= newp; Point(pt3cc) = {pt3Cx*Cos(2*Pi/numberOfFins/2 *(k/(ktail+1)) ) - pt3Cy*Sin(2*Pi/numberOfFins/2 *(k/(ktail+1)) ), pt3Cx*Sin(2*Pi/numberOfFins/2 *(k/(ktail+1)) ) + pt3Cy*Cos(2*Pi/numberOfFins/2 *(k/(ktail+1)) ), pt3Cz};
+EndFor
+
+cpt3a=newl; Spline(cpt3a) = {pt3, pt3cc-ktail+1:pt3cc, pt3c};
+
+coord0[]= Point{pcc4b};
+coord1[]= Point{pt3b};
+coord2[]= Point{p4_1b};
+For k In {0:2}
+vec1[k]= coord1[k]-coord0[k];
+vec2[k]= coord2[k]-coord0[k];
+EndFor
+rTail= (vec1[0]^2+vec1[1]^2+vec1[2]^2)^(1/2);
+
+For k In {1:ktail}
+////////////////////////
+pt3Cx= (1) *vec1[0]+ (1/2) *k/(ktail+1)*vec2[0];
+pt3Cy= (1) *vec1[1]+ (1/2) *k/(ktail+1)*vec2[1];
+pt3Cz= (1) *vec1[2]+ (1/2) *k/(ktail+1)*vec2[2];
+
+rTmp= (pt3Cx^2+pt3Cy^2+pt3Cz^2)^(1/2);
+pt3Cx= coord0[0]+pt3Cx*rTail/rTmp;
+pt3Cy= coord0[1]+pt3Cy*rTail/rTmp;
+pt3Cz= coord0[2]+pt3Cz*rTail/rTmp;
+//pt3C= newp; Point(pt3C) = {pt3Cx, pt3Cy, pt3Cz};
+pt3ccc= newp; Point(pt3ccc) = {pt3Cx*Cos(2*Pi/numberOfFins/2 *(-k/(ktail+1)) ) - pt3Cy*Sin(2*Pi/numberOfFins/2 *(-k/(ktail+1)) ), pt3Cx*Sin(2*Pi/numberOfFins/2 *(-k/(ktail+1)) ) + pt3Cy*Cos(2*Pi/numberOfFins/2 *(-k/(ktail+1)) ), pt3Cz};
+EndFor
+
+cpt3b=newl; Spline(-cpt3b) = {pt3b, pt3ccc-ktail+1:pt3ccc, pt3c}; 
+
+cnose2c= newl; Circle(cnose2c) = {pt2c, pcc3, p3_1c};
+
+coord[] = Point{pcc4};
+pcc4c=newp; Point(pcc4c) = {coord[0]*Cos(2*Pi/numberOfFins/2) - coord[1]*Sin(2*Pi/numberOfFins/2), coord[0]*Sin(2*Pi/numberOfFins/2) + coord[1]*Cos(2*Pi/numberOfFins/2), coord[2]};
+ctail1c= newl; Circle(ctail1c) = {p4_1c, pcc4c, pt3c};
+
+// Splines between the two fins
+//h = finLength;
+coord[] = Point {p3_1c}; //Point de départ de la courbe
+p1x_s1c = twistAngle* (centerDiameter/2);
+p1z_s1c = h;
+
+p2x_s1c = (twistAngle- leadAngle)* (centerDiameter/2);
+p2z_s1c = h - leadAngle * (centerDiameter/2) * Tan(exitAngle);
+
+r = (h - twistAngle * (centerDiameter/2) * Tan(exitAngle)) * beta;
+p3x_s1c = 0;
+p3z_s1c = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s1c = 0;
+p4z_s1c = 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s1c[i] = (1-u)^3*p1x_s1c+3*u*(1-u)^2*p2x_s1c+3*u^2*(1-u)*p3x_s1c+u^3*p4x_s1c;
+pz_s1c[i] = (1-u)^3*p1z_s1c+3*u*(1-u)^2*p2z_s1c+3*u^2*(1-u)*p3z_s1c+u^3*p4z_s1c;
+x_s1c[i] = Cos(px_s1c[i]/(centerDiameter/2))*coord[0] - Sin(px_s1c[i]/(centerDiameter/2))*coord[1];
+y_s1c[i] = Sin(px_s1c[i]/(centerDiameter/2))*coord[0] + Cos(px_s1c[i]/(centerDiameter/2))*coord[1];
+ps_s1c= newp; Point(ps_s1c) = {x_s1c[i], y_s1c[i], pz_s1c[i]} ;
+EndFor
+
+s1c = newl; Spline(s1c) = {p3_1c, ps_s1c-nbPointsSpline+1:ps_s1c, p4_1c}; // Spline on centerpiece wall
+
+//h = finLength;
+coord[] = Point {p3_2c}; //Point de départ de la courbe
+Radius= (coord[0]^2 + coord[1]^2)^(1/2);
+p1x_s2c = twistAngle* (Radius);
+p1z_s2c = h;
+
+p2x_s2c = (twistAngle- leadAngle)* (Radius);
+p2z_s2c = h - leadAngle * (Radius) * Tan(exitAngle);
+
+r = (h - twistAngle * (Radius) * Tan(exitAngle)) * beta;
+p3x_s2c = 0;
+p3z_s2c = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s2c = 0;
+p4z_s2c = 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s2c[i] = (1-u)^3*p1x_s2c+3*u*(1-u)^2*p2x_s2c+3*u^2*(1-u)*p3x_s2c+u^3*p4x_s2c;
+pz_s2c[i] = (1-u)^3*p1z_s2c+3*u*(1-u)^2*p2z_s2c+3*u^2*(1-u)*p3z_s2c+u^3*p4z_s2c;
+x_s2c[i] = Cos(px_s2c[i]/(Radius))*coord[0] - Sin(px_s2c[i]/(Radius))*coord[1];
+y_s2c[i] = Sin(px_s2c[i]/(Radius))*coord[0] + Cos(px_s2c[i]/(Radius))*coord[1];
+ps_s2c= newp; Point(ps_s2c) = {x_s2c[i], y_s2c[i], pz_s2c[i]} ;
+EndFor
+
+s2c = newl; Spline(s2c) = {p3_2c, ps_s2c-nbPointsSpline+1:ps_s2c, p4_2c}; // intermediate Spline
+
+//h = finLength;
+coord[] = Point {p3_3c}; //Point de départ de la courbe
+p1x_s3c = twistAngle* (pipeDiameter/2);
+p1z_s3c = h;
+
+p2x_s3c = (twistAngle- leadAngle)* (pipeDiameter/2);
+p2z_s3c = h - leadAngle * (pipeDiameter/2) * Tan(exitAngle);
+
+r = (h - twistAngle * (pipeDiameter/2) * Tan(exitAngle)) * beta;
+p3x_s3c = 0;
+p3z_s3c = h - ((1 - gamma) * r + gamma * h);
+
+p4x_s3c = 0;
+p4z_s3c = 0;
+
+For i In {1:nbPointsSpline}
+u = 1-i/(nbPointsSpline+1);
+px_s3c[i] = (1-u)^3*p1x_s3c+3*u*(1-u)^2*p2x_s3c+3*u^2*(1-u)*p3x_s3c+u^3*p4x_s3c;
+pz_s3c[i] = (1-u)^3*p1z_s3c+3*u*(1-u)^2*p2z_s3c+3*u^2*(1-u)*p3z_s3c+u^3*p4z_s3c;
+x_s3c[i] = Cos(px_s3c[i]/(pipeDiameter/2))*coord[0] - Sin(px_s3c[i]/(pipeDiameter/2))*coord[1];
+y_s3c[i] = Sin(px_s3c[i]/(pipeDiameter/2))*coord[0] + Cos(px_s3c[i]/(pipeDiameter/2))*coord[1];
+ps_s3c= newp; Point(ps_s3c) = {x_s3c[i], y_s3c[i], pz_s3c[i]} ;
+EndFor
+
+s3c = newl; Spline(s3c) = {p3_3c, ps_s3c-nbPointsSpline+1:ps_s3c, p4_3c}; // Spline on pipe wall
+
+//////
+
+// Guiding surfaces for the revolution (ext)
+sRev1= newll;
+sRev1= news;
+Line Loop(sRev1) = {lh1_3, li2_3a, -lh1_3c, -li1_3a};
+Ruled Surface(sRev1) = {sRev1};
+
+sRev1b= newll;
+sRev1b= news;
+Line Loop(sRev1b) = {lh1_3c, li2_3b, -lh1_3b, -li1_3b};
+Ruled Surface(sRev1b) = {sRev1b};
+
+sRev2= newll;
+sRev2= news;
+Line Loop(sRev2) = {lh2_3, li3_3a, -lh2_3c, -li2_3a};
+Ruled Surface(sRev2) = {sRev2};
+
+sRev2b= newll;
+sRev2b= news;
+Line Loop(sRev2b) = {lh2_3c, li3_3b, -lh2_3b, -li2_3b};
+Ruled Surface(sRev2b) = {sRev2b};
+
+/* this method creates surfaces that are not included into a cylinder
+//Warning: this method creates surfaces that are not included into a cylinder!
+sRev3= newll;
+sRev3= news;
+Line Loop(sRev3) = {s3, li4_3a, -s3c, -li3_3a};
+Ruled Surface(sRev3) = {sRev3};
+
+sRev3b= newll;
+sRev3b= news;
+Line Loop(sRev3b) = {s3c, li4_3b, -s3b, -li3_3b};
+Ruled Surface(sRev3b) = {sRev3b};
+*/
+
+sRev4= newll;
+sRev4= news;
+Line Loop(sRev4) = {lh4_3, li5_3a, -lh4_3c, -li4_3a};
+Ruled Surface(sRev4) = {sRev4};
+
+sRev4b= newll;
+sRev4b= news;
+Line Loop(sRev4b) = {lh4_3c, li5_3b, -lh4_3b, -li4_3b};
+Ruled Surface(sRev4b) = {sRev4b};
+
+sRev5= newll;
+sRev5= news;
+Line Loop(sRev5) = {lh5_3, li6_3a, -lh5_3c, -li5_3a};
+Ruled Surface(sRev5) = {sRev5};
+
+sRev5b= newll;
+sRev5b= news;
+Line Loop(sRev5b) = {lh5_3c, li6_3b, -lh5_3b, -li5_3b};
+Ruled Surface(sRev5b) = {sRev5b};
+
+//HB
+sRev6= newll;
+sRev6= news;
+Line Loop(sRev6) = {lh6_3, li7_3a, -lh6_3c, -li6_3a};
+Ruled Surface(sRev6) = {sRev6};
+
+sRev6b= newll;
+sRev6b= news;
+Line Loop(sRev6b) = {lh6_3c, li7_3b, -lh6_3b, -li6_3b};
+Ruled Surface(sRev6b) = {sRev6b};
+
+// Guiding surfaces for the revolution (int)
+sRevi1= newll;
+sRevi1= news;
+Line Loop(sRevi1) = {cnose1, cpt2a, cpt2b, -cnose1b};
+Ruled Surface(sRevi1) = {sRevi1} In Sphere { pcc3 };
+
+// Ruled Surface: three or four ELEMENTARY lines
+sRevi2= newll;
+sRevi2= news;
+Line Loop(sRevi2) = {cnose2, li3_1a, -cnose2c, -cpt2a};
+Ruled Surface(sRevi2) = {sRevi2} In Sphere { pcc3 };
+
+sRevi2b= newll;
+sRevi2b= news;
+Line Loop(sRevi2b) = {cnose2c, li3_1b, -cnose2b, -cpt2b};
+Ruled Surface(sRevi2b) = {sRevi2b} In Sphere { pcc3 };
+
+/*
+//Warning: this method creates surfaces that are not included into a cylinder!
+sRevi3= newll;
+sRevi3= news;
+Line Loop(sRevi3) = {s1, li4_1a, -s1c, -li3_1a};
+Ruled Surface(sRevi3) = {sRevi3};
+
+sRevi3b= newll;
+sRevi3b= news;
+Line Loop(sRevi3b) = {s1c, li4_1b, -s1b, -li3_1b};
+Ruled Surface(sRevi3b) = {sRevi3b};
+*/
+
+sRevi4= newll;
+sRevi4= news;
+Line Loop(sRevi4) = {ctail1, cpt3a, -ctail1c, -li4_1a};
+Ruled Surface(sRevi4) = {sRevi4};
+
+sRevi4b= newll;
+sRevi4b= news;
+Line Loop(sRevi4b) = {ctail1c, cpt3b, -ctail1b, -li4_1b};
+Ruled Surface(sRevi4b) = {sRevi4b};
+
+sRevi5= newll;
+sRevi5= news;
+Line Loop(sRevi5) = {ctail2, -ctail2b, -cpt3b, -cpt3a};
+Ruled Surface(sRevi5) = {sRevi5};
+
+// Opposite surfaces ["option"=b]
+// amont = upstream
+/*
+// Will be created later by rotating (+duplicata) the master surfaces
+Amont1b = newll;
+Amont1b = news;
+Line Loop(Amont1b) = {lh1_1, lv2_1b, -lh1_2b, -lv1_1b};
+Plane Surface(Amont1b) = {Amont1b};
+
+Amont2b = newll;
+Amont2b = news;
+Line Loop(Amont2b) = {lh1_2b, lv2_2b, -lh1_3b, -lv1_2b};
+Plane Surface(Amont2b) = {Amont2b};
+
+Amont3b = newll;
+Amont3b = news;
+Line Loop(Amont3b) = {lh2_1, cnose1b, -lc1b, -lv2_1b};
+Plane Surface(Amont3b) = {Amont3b};
+
+Amont4b = newll;
+Amont4b = news;
+Line Loop(Amont4b) = {cnose2b, lv3_1b, -lh2_2b, lc1b};
+Plane Surface(Amont4b) = {Amont4b};
+
+Amont5b = newll;
+Amont5b = news;
+Line Loop(Amont5b) = {lh2_2b, lv3_2b, -lh2_3b, -lv2_2b};
+Plane Surface(Amont5b) = {Amont5b};
+*/
+
+// 1st fin
+Fin1b = newll;
+Fin1b = news;
+Line Loop(Fin1b) = {s1b, lv4_1b, -s2b, -lv3_1b};
+Ruled Surface(Fin1b) = {Fin1b};
+
+Fin2b = newll;
+Fin2b = news;
+Line Loop(Fin2b) = {s2b, lv4_2b, -s3b, -lv3_2b};
+Ruled Surface(Fin2b) = {Fin2b};
+
+// aval = downstream
+/*
+// Will be created later by rotating (+duplicata) the master surfaces
+Aval1b = newll;
+Aval1b = news;
+Line Loop(Aval1b) = {ctail1b, lc2b, -lh4_2b, -lv4_1b};
+Plane Surface(Aval1b) = {Aval1b};
+
+Aval2b = newll;
+Aval2b = news;
+Line Loop(Aval2b) = {ctail2b, lh4_1, lv5_1b, -lc2b};
+Plane Surface(Aval2b) = {Aval2b};
+
+Aval3b = newll;
+Aval3b = news;
+Line Loop(Aval3b) = {lh4_2b, lv5_2b, -lh4_3b, -lv4_2b};
+Plane Surface(Aval3b) = {Aval3b};
+
+Aval4b = newll;
+Aval4b = news;
+Line Loop(Aval4b) = {lh5_1, lv6_1b, -lh5_2b, -lv5_1b};
+Plane Surface(Aval4b) = {Aval4b};
+
+Aval5b = newll;
+Aval5b = news;
+Line Loop(Aval5b) = {lh5_2b, lv6_2b, -lh5_3b, -lv5_2b};
+Plane Surface(Aval5b) = {Aval5b};
+
+//HB
+Aval6b = newll;
+Aval6b = news;
+Line Loop(Aval6b) = {lh6_1, lv7_1b, -lh6_2b, -lv6_1b};
+Plane Surface(Aval6b) = {Aval6b};
+
+Aval7b = newll;
+Aval7b = news;
+Line Loop(Aval7b) = {lh6_2b, lv7_2b, -lh6_3b, -lv6_2b};
+Plane Surface(Aval7b) = {Aval7b};
+*/
+
+// Intermediate surfaces ["option"=c]
+// amont = upstream
+
+//no "Amont1c"
+
+Amont2c = newll;
+Amont2c = news;
+Line Loop(Amont2c) = {lh1_2c, lv2_2c, -lh1_3c, -lv1_2c};
+Plane Surface(Amont2c) = {Amont2c};
+
+//no "Amont3c"
+
+Amont4c = newll;
+Amont4c = news;
+Line Loop(Amont4c) = {cnose2c, lv3_1c, -lh2_2c, lc1c};
+Plane Surface(Amont4c) = {Amont4c};
+
+Amont5c = newll;
+Amont5c = news;
+Line Loop(Amont5c) = {lh2_2c, lv3_2c, -lh2_3c, -lv2_2c};
+Plane Surface(Amont5c) = {Amont5c};
+
+// 1st fin
+Fin1c = newll;
+Fin1c = news;
+Line Loop(Fin1c) = {s1c, lv4_1c, -s2c, -lv3_1c};
+Ruled Surface(Fin1c) = {Fin1c};
+
+Fin2c = newll;
+Fin2c = news;
+Line Loop(Fin2c) = {s2c, lv4_2c, -s3c, -lv3_2c};
+Ruled Surface(Fin2c) = {Fin2c};
+
+// aval = downstream
+Aval1c = newll;
+Aval1c = news;
+Line Loop(Aval1c) = {ctail1c, lc2c, -lh4_2c, -lv4_1c};
+Plane Surface(Aval1c) = {Aval1c};
+
+//no "Aval2c"
+
+Aval3c = newll;
+Aval3c = news;
+Line Loop(Aval3c) = {lh4_2c, lv5_2c, -lh4_3c, -lv4_2c};
+Plane Surface(Aval3c) = {Aval3c};
+
+//no "Aval4c"
+
+Aval5c = newll;
+Aval5c = news;
+Line Loop(Aval5c) = {lh5_2c, lv6_2c, -lh5_3c, -lv5_2c};
+Plane Surface(Aval5c) = {Aval5c};
+
+//HB
+
+//no "Aval6c"
+
+Aval7c = newll;
+Aval7c = news;
+Line Loop(Aval7c) = {lh6_2c, lv7_2c, -lh6_3c, -lv6_2c};
+Plane Surface(Aval7c) = {Aval7c};
+
+// Inclined intermediate surfaces ["option"=d or e]
+Amont1d = newll;
+Amont1d = news;
+Line Loop(Amont1d) = {lh1_2, li2_2a, -lh1_2c, -li1_2a};
+Plane Surface(Amont1d) = {Amont1d};
+
+Amont1e = newll;
+Amont1e = news;
+Line Loop(Amont1e) = {lh1_2c, li2_2b, -lh1_2b, -li1_2b};
+Plane Surface(Amont1e) = {Amont1e};
+
+Amont3d = newll;
+Amont3d = news;
+Line Loop(Amont3d) = {lc1, cpt2a, -lc1c, -li2_2a};
+Ruled Surface(Amont3d) = {Amont3d};
+
+Amont3e = newll;
+Amont3e = news;
+Line Loop(Amont3e) = {lc1c, cpt2b, -lc1b, -li2_2b};
+Ruled Surface(Amont3e) = {Amont3e};
+
+Amont4d = newll;
+Amont4d = news;
+Line Loop(Amont4d) = {lh2_2, li3_2a, -lh2_2c, -li2_2a};
+Plane Surface(Amont4d) = {Amont4d};
+
+Amont4e = newll;
+Amont4e = news;
+Line Loop(Amont4e) = {lh2_2c, li3_2b, -lh2_2b, -li2_2b};
+Plane Surface(Amont4e) = {Amont4e};
+
+Fin1d = newll;
+Fin1d = news;
+Line Loop(Fin1d) = {s2, li4_2a, -s2c, -li3_2a};
+Ruled Surface(Fin1d) = {Fin1d};
+
+Fin1e = newll;
+Fin1e = news;
+Line Loop(Fin1e) = {s2c, li4_2b, -s2b, -li3_2b};
+Ruled Surface(Fin1e) = {Fin1e};
+
+Aval1d = newll;
+Aval1d = news;
+Line Loop(Aval1d) = {-li4_2a, lh4_2, li5_2a, -lh4_2c};
+Plane Surface(Aval1d) = {Aval1d};
+
+Aval1e = newll;
+Aval1e = news;
+Line Loop(Aval1e) = {-li4_2b, lh4_2c, li5_2b, -lh4_2b};
+Plane Surface(Aval1e) = {Aval1e};
+
+Aval2d = newll;
+Aval2d = news;
+Line Loop(Aval2d) = {lc2, li5_2a, -lc2c, -cpt3a};
+Ruled Surface(Aval2d) = {Aval2d};
+
+Aval2e = newll;
+Aval2e = news;
+Line Loop(Aval2e) = {lc2c, li5_2b, -lc2b, -cpt3b};
+Ruled Surface(Aval2e) = {Aval2e};
+
+Aval4d = newll;
+Aval4d = news;
+Line Loop(Aval4d) = {lh5_2, li6_2a, -lh5_2c, -li5_2a};
+Plane Surface(Aval4d) = {Aval4d};
+
+Aval4e = newll;
+Aval4e = news;
+Line Loop(Aval4e) = {lh5_2c, li6_2b, -lh5_2b, -li5_2b};
+Plane Surface(Aval4e) = {Aval4e};
+
+Aval6d = newll;
+Aval6d = news;
+Line Loop(Aval6d) = {lh6_2, li7_2a, -lh6_2c, -li6_2a};
+Plane Surface(Aval6d) = {Aval6d};
+
+Aval6e = newll;
+Aval6e = news;
+Line Loop(Aval6e) = {lh6_2c, li7_2b, -lh6_2b, -li6_2b};
+Plane Surface(Aval6e) = {Aval6e};
+
+/*****
+* Mesh
+******/
+
+// Meshing of the edges (Using Periodic Lines)
+//
+Transfinite Line {lh1_1,lh1_2,lh1_3} = cellsEntranceLength Using Progression entranceProgression;
+Periodic Line {lh1_2b,lh1_3b} = {lh1_2,lh1_3};
+Periodic Line {lh1_2c,lh1_3c} = {lh1_2,lh1_3};
+
+Transfinite Line {lv1_1,lv2_1} = cellsRadial2 Using Progression radial2Progression;
+Periodic Line {lv1_1b,lv2_1b} = {lv1_1,lv2_1};
+
+Transfinite Line {cnose1} = cellsRadial2 Using Progression radial2noseProgression1;
+Periodic Line {cnose1b} = {cnose1};
+
+Transfinite Line {lv1_2,lv2_2,lv3_2,lv4_2,lv5_2,lv6_2,lv7_2} = cellsRadial Using Progression radialProgression;
+Periodic Line {lv1_2b,lv2_2b,lv3_2b,lv4_2b,lv5_2b,lv6_2b,lv7_2b} = {lv1_2,lv2_2,lv3_2,lv4_2,lv5_2,lv6_2,lv7_2};
+
+// Link the circles to the center-quadrangle
+Transfinite Line {lv1_2c, lv2_2c, lv3_2c, lv4_2c, lv5_2c, lv6_2c, lv7_2c} =  cellsRadial Using Progression radialCprogression;
+
+Transfinite Line {lh2_2,lh2_3} = cellsNoseLength Using Progression noseProgression;
+Periodic Line {lh2_2b,lh2_3b} = {lh2_2,lh2_3};
+Transfinite Line {cnose2} = cellsNoseLength Using Progression noseProgression2;
+Periodic Line {cnose2b} = {cnose2};
+
+Transfinite Line {lh2_3c,lh2_2c} = cellsNoseLength Using Progression noseProgression; //noseProgressionC ??
+Transfinite Line {cnose2c} = cellsNoseLength Using Progression noseProgression2; //noseProgression2C ??
+
+Transfinite Line {lh2_1} = cellsRadial2 Using Progression radial2noseProgression3;
+
+Transfinite Line {lv3_1,lv4_1} = cellsRadial2 Using Progression radial2Progression2;
+Periodic Line {lv3_1b,lv4_1b} = {lv3_1,lv4_1};
+Periodic Line {lv3_1c,lv4_1c} = {lv3_1,lv4_1};
+
+
+Transfinite Line {lc1} = cellsRadial2 Using Progression radial2noseProgression2;
+Periodic Line {lc1b} = {lc1};
+Transfinite Line {lc1c} = cellsRadial2 Using Progression radial2noseProgression2C;
+
+//
+Transfinite Line {cpt2a,-cpt2b} = cellsRadial2 Using Progression revolution2Progression; //??
+
+Transfinite Line {li3_1a,-li3_1b} = cellsRadial2 Using Progression revolution2Progression;
+Transfinite Line {li4_1a,-li4_1b} = cellsRadial2 Using Progression revolution2Progression;
+
+Transfinite Line {cpt3a,-cpt3b} = cellsRadial2 Using Progression revolution2Progression; //??
+//
+
+Transfinite Line {-lc2} = cellsRadial2 Using Bump .5; //radial2tailProgression2
+Periodic Line {lc2b} = {lc2};
+Transfinite Line {-lc2c} = cellsRadial2 Using Bump .5; //radial2tailProgression2C (change {+/-lc2c})
+
+Transfinite Line {lh4_1} = cellsRadial2 Using Progression radial2tailProgression3;
+
+Transfinite Line {ctail1} = cellsTailLength Using Bump .9; //tailProgression2
+Transfinite Line {lh4_2,lh4_3} = cellsTailLength Using Bump .9; //tailProgression
+Periodic Line {ctail1b} = {ctail1};
+Periodic Line {ctail1c} = {ctail1};
+Periodic Line {lh4_2b,lh4_3b} = {lh4_2,lh4_3};
+Periodic Line {lh4_2c,lh4_3c} = {lh4_2,lh4_3};
+
+Transfinite Line {ctail2} = cellsRadial2 Using Bump 1; //radial2tailProgression1
+Periodic Line {ctail2b} = {ctail2};
+
+Transfinite Line {lv5_1,lv6_1,lv7_1} = cellsRadial2 Using Progression radial2Progression3; //radial2Progression3 ??
+Periodic Line {lv5_1b,lv6_1b,lv7_1b} = {lv5_1,lv6_1,lv7_1};
+
+Transfinite Line {lh5_1,lh5_2,lh5_3} = cellsAvalSwirler Using Progression avalSwirlerProgression;
+Periodic Line {lh5_2b,lh5_3b} = {lh5_3,lh5_3};
+Periodic Line {lh5_2c,lh5_3c} = {lh5_3,lh5_3};
+
+Transfinite Line {lh6_1,lh6_2,lh6_3} = cellsPipeLength Using Progression pipeProgression;
+Periodic Line {lh6_2b,lh6_3b} = {lh6_3,lh6_3};
+Periodic Line {lh6_2c,lh6_3c} = {lh6_3,lh6_3};
+
+// Sides of the center-quadrangle:
+Transfinite Line {li1_2a, li2_2a, li3_2a, li4_2a} =  cellsRadial2 Using Progression interProgression;
+Transfinite Line {li5_2a} =  cellsRadial2 Using Progression interProgression2; //??
+Transfinite Line {li6_2a, li7_2a} =  cellsRadial2 Using Progression interProgression2;
+// Using Periodic Line with - (minus), minus has te be at the right-side from the equality signe
+Periodic Line {li1_2b, li2_2b, li3_2b, li4_2b, li5_2b, li6_2b, li7_2b} = {-li1_2a, -li2_2a, -li3_2a, -li4_2a, -li5_2a, -li6_2a, -li7_2a};
+
+// Lines for the revolution:
+Transfinite Line {li1_3a, li2_3a, li3_3a, li4_3a} =  cellsRadial2 Using Progression revolutionProgression;
+Transfinite Line {li5_3a} =  cellsRadial2 Using Progression revolutionProgression2; //??
+Transfinite Line {li6_3a, li7_3a} =  cellsRadial2 Using Progression revolutionProgression2;
+Periodic Line {li1_3b, li2_3b, li3_3b, li4_3b, li5_3b, li6_3b, li7_3b} = {-li1_3a, -li2_3a, -li3_3a, -li4_3a, -li5_3a, -li6_3a, -li7_3a};
+
+//Francois BEAUBERT
+Transfinite Line {s1,s2,s3} = cellsFinLength Using Bump finBump;
+Periodic Line {s1b,s2b,s3b} = {s1,s2,s3};
+Periodic Line {s1c,s2c,s3c} = {s1,s2,s3};
+
+// Meshing of the surfaces
+//
+//Transfinite Surface{Amont1, Amont2, Amont3, Amont4, Amont5, Aval1, Aval2, Aval3, Aval4, Aval5, Aval6, Aval7, Amont1b, Amont2b, Amont3b, Amont4b, Amont5b, Aval1b, Aval2b, Aval3b, Aval4b, Aval5b, Aval6b, Aval7b};
+Transfinite Surface{Amont1, Amont2, Amont3, Amont4, Amont5, Aval1, Aval2, Aval3, Aval4, Aval5, Aval6, Aval7};
+Transfinite Surface{Amont1d, Amont1e, Amont2c, Amont3d, Amont3e, Amont4c, Amont4d, Amont4e, Amont5c, Aval1c, Aval1d, Aval1e, Aval2d, Aval2e, Aval3c, Aval4d, Aval4e, Aval5c, Aval6d, Aval6e, Aval7c};
+Transfinite Surface{Fin1, Fin2, Fin1b, Fin2b, Fin1c, Fin2c, Fin1d, Fin1e};
+Transfinite Surface{sRev1, sRev1b, sRev2, sRev2b, sRev4, sRev4b, sRev5, sRev5b, sRev6, sRev6b};
+Transfinite Surface{sRevi1, sRevi2, sRevi2b, sRevi4, sRevi4b, sRevi5};
+Transfinite Surface{slice1_1, slice1_2a, slice1_2b, slice2_1, slice2_2a, slice2_2b, slice5_1, slice5_2a, slice5_2b, slice6_1, slice6_2a, slice6_2b, slice7_1, slice7_2a, slice7_2b};
+Transfinite Surface{slice3_1a, slice3_1b, slice3_2a, slice3_2b, slice4_1a, slice4_1b, slice4_2a, slice4_2b};
+
+//Recombine Surface{Amont1, Amont2, Amont3, Amont4, Amont5, Aval1, Aval2, Aval3, Aval4, Aval5, Aval6, Aval7, Amont1b, Amont2b, Amont3b, Amont4b, Amont5b, Aval1b, Aval2b, Aval3b, Aval4b, Aval5b, Aval6b, Aval7b};
+Recombine Surface{Amont1, Amont2, Amont3, Amont4, Amont5, Aval1, Aval2, Aval3, Aval4, Aval5, Aval6, Aval7};
+Recombine Surface{Amont1d, Amont1e, Amont2c, Amont3d, Amont3e, Amont4c, Amont4d, Amont4e, Amont5c, Aval1c, Aval1d, Aval1e, Aval2d, Aval2e, Aval3c, Aval4d, Aval4e, Aval5c, Aval6d, Aval6e, Aval7c};
+Recombine Surface{Fin1, Fin2, Fin1b, Fin2b, Fin1c, Fin2c, Fin1d, Fin1e};
+Recombine Surface{sRev1, sRev1b, sRev2, sRev2b, sRev4, sRev4b, sRev5, sRev5b, sRev6, sRev6b};
+Recombine Surface{sRevi1, sRevi2, sRevi2b, sRevi4, sRevi4b, sRevi5};
+Recombine Surface{slice1_1, slice1_2a, slice1_2b, slice2_1, slice2_2a, slice2_2b, slice5_1, slice5_2a, slice5_2b, slice6_1, slice6_2a, slice6_2b, slice7_1, slice7_2a, slice7_2b};
+Recombine Surface{slice3_1a, slice3_1b, slice3_2a, slice3_2b, slice4_1a, slice4_1b, slice4_2a, slice4_2b};
+//
+
+// Complete the geometry and meshes of the opposite surfaces for Amont (upstream) et Aval (downstream):
+//
+////////////////////////////////////////////////////////////////////////
+Geometry.CopyMeshingMethod = 1;
+
+Amont1b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Amont1}; }}
+
+Amont2b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Amont2}; }}
+
+Amont3b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Amont3}; }}
+
+Amont4b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Amont4}; }}
+
+Amont5b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Amont5}; }}
+
+Aval1b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval1}; }}
+
+Aval2b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval2}; }}
+
+Aval3b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval3}; }}
+
+Aval4b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval4}; }}
+
+Aval5b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval5}; }}
+
+Aval6b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval6}; }}
+
+Aval7b=news;
+Rotate {{0, 0, 1}, {0, 0, 0}, 2*Pi/numberOfFins} {Duplicata { Surface{Aval7}; }}
+
+//Coherence;
+
+// Volumes ("five-or six-faces volumes") :
+vol1 = newsl;
+vol1 = newv;
+Surface Loop(vol1) = {slice1_1, Amont1, slice2_1, Amont1d, Amont1e, Amont1b};
+Volume(vol1) = {vol1};
+
+vol1b = newsl;
+vol1b = newv;
+Surface Loop(vol1b) = {slice1_2a, Amont2, slice2_2a, Amont1d, Amont2c, sRev1};
+Volume(vol1b) = {vol1b};
+
+vol1c = newsl;
+vol1c = newv;
+Surface Loop(vol1c) = {slice1_2b, Amont2c, slice2_2b, Amont1e, Amont2b, sRev1b};
+Volume(vol1c) = {vol1c};
+
+vol2 = newsl;
+vol2 = newv;
+Surface Loop(vol2) = {slice2_1, Amont3, Amont3d, Amont3e, Amont3b, sRevi1};
+Volume(vol2) = {vol2};
+
+vol2b = newsl;
+vol2b = newv;
+Surface Loop(vol2b) = {Amont4d, Amont3d, Amont4, slice3_1a, Amont4c, sRevi2};
+Volume(vol2b) = {vol2b};
+
+vol2c = newsl;
+vol2c = newv;
+Surface Loop(vol2c) = {Amont4e, Amont3e, Amont4c, slice3_1b, Amont4b, sRevi2b};
+Volume(vol2c) = {vol2c};
+
+vol2d = newsl;
+vol2d = newv;
+Surface Loop(vol2d) = {slice2_2a, Amont4d, Amont5, slice3_2a, Amont5c, sRev2};
+Volume(vol2d) = {vol2d};
+
+vol2e = newsl;
+vol2e = newv;
+Surface Loop(vol2e) = {slice2_2b, Amont4e, Amont5c, slice3_2b, Amont5b, sRev2b};
+Volume(vol2e) = {vol2e};
+
+/*
+vol3 = newsl;
+vol3 = newv;
+Surface Loop(vol3) = {Fin1, slice3_1a, sRevi3, slice4_1a, Fin1d, Fin1c};
+Volume(vol3) = {vol3};
+
+vol3b = newsl;
+vol3b = newv;
+Surface Loop(vol3b) = {Fin1b, slice3_1b, sRevi3b, slice4_1b, Fin1e, Fin1c};
+Volume(vol3b) = {vol3b};
+*/
+
+/*
+vol3c = newsl;
+vol3c = newv;
+Surface Loop(vol3c) = {slice3_2a, Fin1d, Fin2, slice4_2a, Fin2c, sRev3};
+Volume(vol3c) = {vol3c};
+
+vol3d = newsl;
+vol3d = newv;
+Surface Loop(vol3d) = {slice3_2b, Fin1e, Fin2b, slice4_2b, Fin2c, sRev3b};
+Volume(vol3d) = {vol3d};
+*/
+
+vol4 = newsl;
+vol4 = newv;
+Surface Loop(vol4) = {slice5_1, Aval2, Aval2d, Aval2e, Aval2b, sRevi5};
+Volume(vol4) = {vol4};
+
+vol4b = newsl;
+vol4b = newv;
+Surface Loop(vol4b) = {Aval1d, Aval2d, Aval1, slice4_1a, Aval1c, sRevi4};
+Volume(vol4b) = {vol4b};
+
+vol4c = newsl;
+vol4c = newv;
+Surface Loop(vol4c) = {Aval1e, Aval2e, Aval1c, slice4_1b, Aval1b, sRevi4b};
+Volume(vol4c) = {vol4c};
+
+vol4d = newsl;
+vol4d = newv;
+Surface Loop(vol4d) = {slice4_2a, Aval1d, Aval3, slice5_2a, Aval3c, sRev4};
+Volume(vol4d) = {vol4d};
+
+vol4e = newsl;
+vol4e = newv;
+Surface Loop(vol4e) = {slice4_2b, Aval1e, Aval3c, slice5_2b, Aval3b, sRev4b};
+Volume(vol4e) = {vol4e};
+
+vol5 = newsl;
+vol5 = newv;
+Surface Loop(vol5) = {slice5_1, Aval4, slice6_1, Aval4d, Aval4e, Aval4b};
+Volume(vol5) = {vol5};
+
+vol5b = newsl;
+vol5b = newv;
+Surface Loop(vol5b) = {slice5_2a, Aval5, slice6_2a, Aval4d, Aval5c, sRev5};
+Volume(vol5b) = {vol5b};
+
+vol5c = newsl;
+vol5c = newv;
+Surface Loop(vol5c) = {slice5_2b, Aval5c, slice6_2b, Aval4e, Aval5b, sRev5b};
+Volume(vol5c) = {vol5c};
+//
+//HB:
+vol6 = newsl;
+vol6 = newv;
+Surface Loop(vol6) = {slice6_1, Aval6, slice7_1, Aval6d, Aval6e, Aval6b};
+Volume(vol6) = {vol6};
+
+vol6b = newsl;
+vol6b = newv;
+Surface Loop(vol6b) = {slice6_2a, Aval7, slice7_2a, Aval6d, Aval7c, sRev6};
+Volume(vol6b) = {vol6b};
+
+vol6c = newsl;
+vol6c = newv;
+Surface Loop(vol6c) = {slice6_2b, Aval7c, slice7_2b, Aval6e, Aval7b, sRev6b};
+Volume(vol6c) = {vol6c};
+
+// Meshing of the volumes
+//
+//Transfinite Volume{vol1, vol1b, vol1c, vol2, vol2b, vol2c, vol2d, vol2e, vol3, vol3b, vol3c, vol3d, vol4, vol4b, vol4c, vol4d, vol4e, vol5, vol5b, vol5c, vol6, vol6b, vol6c};
+Transfinite Volume{vol1, vol1b, vol1c, vol2, vol2b, vol2c, vol2d, vol2e, vol4, vol4b, vol4c, vol4d, vol4e, vol5, vol5b, vol5c, vol6, vol6b, vol6c};
+//
+
+// Complete the geometry and meshes of the fins:
+//
+Geometry.ExtrudeSplinePoints = 50; // default value: 5
+
+revFinExt1[] = Extrude { {0,0,1} , {0,0,100} , Pi/numberOfFins } {
+  Line{s3}; Layers{50}; Recombine;
+};
+
+sRev3= revFinExt1[1];
+
+revFinExt2[] = Extrude { {0,0,1} , {0,0,100} , Pi/numberOfFins } {
+  Line{s3c}; Layers{50}; Recombine;
+};
+
+sRev3b= revFinExt2[1];
+
+Transfinite Surface{sRev3, sRev3b};
+Recombine Surface{sRev3, sRev3b};
+
+//Coherence;
+vol3c = newsl;
+vol3c = newv;
+Surface Loop(vol3c) = {slice3_2a, Fin1d, Fin2, slice4_2a, Fin2c, sRev3};
+Volume(vol3c) = {vol3c};
+
+vol3d = newsl;
+vol3d = newv;
+Surface Loop(vol3d) = {slice3_2b, Fin1e, Fin2b, slice4_2b, Fin2c, sRev3b};
+Volume(vol3d) = {vol3d};
+
+Transfinite Volume{vol3c, vol3d};
+
+//
+revFinInt1[] = Extrude { {0,0,1} , {0,0,100} , Pi/numberOfFins } {
+  Line{s1}; Layers{50}; Recombine;
+};
+
+sRevi3= revFinInt1[1];
+
+revFinInt2[] = Extrude { {0,0,1} , {0,0,100} , Pi/numberOfFins } {
+  Line{s1c}; Layers{50}; Recombine;
+};
+
+sRevi3b= revFinInt2[1];
+
+Transfinite Surface{sRevi3, sRevi3b};
+Recombine Surface{sRevi3, sRevi3b};
+
+//Coherence;
+vol3 = newsl;
+vol3 = newv;
+Surface Loop(vol3) = {Fin1, slice3_1a, sRevi3, slice4_1a, Fin1d, Fin1c};
+Volume(vol3) = {vol3};
+
+vol3b = newsl;
+vol3b = newv;
+Surface Loop(vol3b) = {Fin1b, slice3_1b, sRevi3b, slice4_1b, Fin1e, Fin1c};
+Volume(vol3b) = {vol3b};
+
+Transfinite Volume{vol3, vol3b};
+
+//lists:
+list_cyclic_a[] = {Amont1, Amont2, Amont3, Amont4, Amont5, Aval1, Aval2, Aval3, Aval4, Aval5, Aval6, Aval7};
+
+list_cyclic_b[] = {Amont1b, Amont2b, Amont3b, Amont4b, Amont5b, Aval1b, Aval2b, Aval3b, Aval4b, Aval5b, Aval6b, Aval7b}; 
+
+list_inlet[] = {slice1_1, slice1_2a, slice1_2b};
+
+list_outlet[] = {slice7_1, slice7_2a, slice7_2b};
+
+list_wall[] = {sRev1, sRev1b, sRev2, sRev2b, sRev3, sRev3b, sRev4, sRev4b, sRev5, sRev5b, sRev6, sRev6b};
+
+list_fin[] = {Fin1, Fin2, Fin1b, Fin2b};
+
+list_centerpiece[] = {sRevi1, sRevi2, sRevi2b, sRevi3, sRevi3b, sRevi4, sRevi4b, sRevi5};
+
+list_volume[] = {vol1, vol1b, vol1c, vol2, vol2b, vol2c, vol2d, vol2e, vol3, vol3b, vol3c, vol3d, vol4, vol4b, vol4c, vol4d, vol4e, vol5, vol5b, vol5c, vol6, vol6b, vol6c};
+//
+
+
+/*
+* Boundary conditions
+*/
+
+
+Physical Surface("Cyclic_a") = list_cyclic_a[];
+Physical Surface("Cyclic_b") = list_cyclic_b[];
+Physical Surface("Inlet") = list_inlet[];
+Physical Surface("Outlet") = list_outlet[];
+Physical Surface("Pipewall") = list_wall[];
+Physical Surface("Fins") = list_fin[];
+Physical Surface("Centerpiece") = list_centerpiece[];
+Physical Volume("Internal") = list_volume[];
+
+//NB: Physical Surface("Slip") a été supprimé ; pensez à l'enlever des conditions sous OpenFOAM
+
+Coherence;
+Coherence Mesh;
